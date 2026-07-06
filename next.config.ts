@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: __dirname,
   },
+  serverExternalPackages: ["better-sqlite3"],
 };
 
 export default nextConfig;

@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:schema": "sqlite3 db/cliniflow.sqlite < db/schema.sql",
+    "seed:superuser": "node scripts/seed-superuser.cjs",
+    "seed:auth-users": "node scripts/seed-auth-users.cjs"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

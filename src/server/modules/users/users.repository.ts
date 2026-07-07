@@ -1,4 +1,4 @@
-import type { AuthUserDTO } from "@/shared/dtos/auth.dtos";
+import type { AdminUserDTO, AuthUserDTO } from "@/shared/dtos/auth.dtos";
 import type { Role } from "@/shared/constants/roles";
 import { getDb } from "@/server/db/connection";
 import { nanoid } from "nanoid";
@@ -13,6 +13,8 @@ type UserRow = {
     password_hash: string;
     role: Role;
     is_active: number;
+    created_at: string;
+    updated_at: string;
 };
 
 export type UserWithPasswordHash = AuthUserDTO & {
@@ -30,15 +32,27 @@ function mapUserRow(row: UserRow): UserWithPasswordHash {
     };
 }
 
+function mapAdminUserRow(row: UserRow): AdminUserDTO {
+    return {
+        id: row.id,
+        name: row.name,
+        email: row.email,
+        role: row.role,
+        isActive: row.is_active === 1,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+    };
+}
+
 export function findUserByEmail(email: string): UserWithPasswordHash | null {
     const row = db
         .prepare(
             `
-      SELECT id, name, email, password_hash, role, is_active
-      FROM users
-      WHERE email = ?
-      LIMIT 1
-      `
+            SELECT id, name, email, password_hash, role, is_active, created_at, updated_at
+            FROM users
+            WHERE email = ?
+            LIMIT 1
+            `
         )
         .get(email) as UserRow | undefined;
 
@@ -49,11 +63,11 @@ export function findUserById(userId: string): AuthUserDTO | null {
     const row = db
         .prepare(
             `
-      SELECT id, name, email, password_hash, role, is_active
-      FROM users
-      WHERE id = ?
-      LIMIT 1
-      `
+            SELECT id, name, email, password_hash, role, is_active, created_at, updated_at
+            FROM users
+            WHERE id = ?
+            LIMIT 1
+            `
         )
         .get(userId) as UserRow | undefined;
 
@@ -70,6 +84,20 @@ export function findUserById(userId: string): AuthUserDTO | null {
     };
 }
 
+export function listUsers(): AdminUserDTO[] {
+    const rows = db
+        .prepare(
+            `
+            SELECT id, name, email, password_hash, role, is_active, created_at, updated_at
+            FROM users
+            ORDER BY created_at DESC
+            `
+        )
+        .all() as UserRow[];
+
+    return rows.map(mapAdminUserRow);
+}
+
 export function createUser(params: {
     name: string;
     email: string;
@@ -80,16 +108,16 @@ export function createUser(params: {
 
     db.prepare(
         `
-    INSERT INTO users (
-      id,
-      name,
-      email,
-      password_hash,
-      role,
-      is_active
-    )
-    VALUES (?, ?, ?, ?, ?, 1)
-    `
+        INSERT INTO users (
+            id,
+            name,
+            email,
+            password_hash,
+            role,
+            is_active
+        )
+        VALUES (?, ?, ?, ?, ?, 1)
+        `
     ).run(
         id,
         params.name,
@@ -105,4 +133,18 @@ export function createUser(params: {
     }
 
     return user;
+}
+
+export function updateUserStatus(params: {
+    userId: string;
+    isActive: boolean;
+}): void {
+    db.prepare(
+        `
+        UPDATE users
+        SET is_active = ?,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+        `
+    ).run(params.isActive ? 1 : 0, params.userId);
 }

@@ -21,3 +21,13 @@ export type CurrentSessionDTO = {
     sessionId: string;
     user: AuthUserDTO;
 };
+
+export type AdminUserDTO = {
+    id: string;
+    name: string;
+    email: string;
+    role: Role;
+    isActive: boolean;
+    createdAt: string;
+    updatedAt: string;
+};

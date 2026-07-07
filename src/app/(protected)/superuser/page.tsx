@@ -1,42 +1,36 @@
+import { listAdminUsers } from "@/server/modules/superuser/superuser.repository";
+import { SuperuserPanel } from "@/app/(protected)/superuser/superuser-panel";
 import { requireRole } from "@/server/auth/session";
-import { ROLES } from "@/shared/constants/roles";
 
 
 export default async function SuperuserPage() {
-    const session = await requireRole([ROLES.SUPERUSER]);
+    const session = await requireRole(["SUPERUSER"]);
+    const users = listAdminUsers();
 
     return (
-        <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-cyan-700">
-                Panel de superusuario
-            </p>
+        <main className="min-h-screen bg-slate-950 px-6 py-8 text-slate-100">
+            <div className="mx-auto flex max-w-6xl flex-col gap-8">
+                <section className="rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-xl">
+                    <div className="flex flex-col gap-2">
+                        <p className="text-sm font-medium uppercase tracking-[0.3em] text-cyan-400">
+                            ClinicFlow
+                        </p>
+                        <h1 className="text-3xl font-bold">
+                            Panel de superusuario
+                        </h1>
+                        <p className="max-w-3xl text-sm text-slate-400">
+                            Administración general de usuarios. Desde aquí se crean cuentas,
+                            se editan datos administrativos básicos y se activa o desactiva el acceso.
+                            Sin notas médicas, sin expediente clínico, sin meterse donde no toca.
+                        </p>
+                    </div>
+                </section>
 
-            <h1 className="mt-3 text-3xl font-bold">
-                Bienvenido, {session.user.name}
-            </h1>
-
-            <div className="mt-8 grid gap-4 md:grid-cols-3">
-                <article className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-                    <h2 className="font-semibold">Usuarios</h2>
-                    <p className="mt-2 text-sm text-slate-600">
-                        Gestión general de usuarios internos y pacientes.
-                    </p>
-                </article>
-
-                <article className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-                    <h2 className="font-semibold">Administración</h2>
-                    <p className="mt-2 text-sm text-slate-600">
-                        Activación, desactivación y control básico del sistema.
-                    </p>
-                </article>
-
-                <article className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-                    <h2 className="font-semibold">Restricción clínica</h2>
-                    <p className="mt-2 text-sm text-slate-600">
-                        Este rol no puede ver ni editar notas médicas.
-                    </p>
-                </article>
+                <SuperuserPanel
+                    users={users}
+                    currentUserId={session.user.id}
+                />
             </div>
-        </div>
+        </main>
     );
 }

@@ -1,5 +1,11 @@
 PRAGMA foreign_keys = ON;
 
+CREATE TABLE IF NOT EXISTS schema_migrations (
+  name TEXT PRIMARY KEY,
+  checksum TEXT NOT NULL,
+  applied_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS users (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
@@ -105,26 +111,110 @@ CREATE TABLE IF NOT EXISTS appointments (
   FOREIGN KEY (created_by_user_id) REFERENCES users(id) ON DELETE RESTRICT
 );
 
-CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
-CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
-CREATE INDEX IF NOT EXISTS idx_users_is_active ON users(is_active);
+CREATE TABLE IF NOT EXISTS medical_records (
+  id TEXT PRIMARY KEY,
+  patient_id TEXT NOT NULL UNIQUE,
+  allergies TEXT,
+  chronic_diseases TEXT,
+  current_medications TEXT,
+  emergency_contact_name TEXT,
+  emergency_contact_phone TEXT,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id);
-CREATE INDEX IF NOT EXISTS idx_sessions_expires_at ON sessions(expires_at);
+  FOREIGN KEY (patient_id)
+    REFERENCES patient_profiles(id)
+    ON DELETE CASCADE
+);
 
-CREATE INDEX IF NOT EXISTS idx_doctor_profiles_user_id ON doctor_profiles(user_id);
-CREATE INDEX IF NOT EXISTS idx_staff_profiles_user_id ON staff_profiles(user_id);
-CREATE INDEX IF NOT EXISTS idx_patient_profiles_user_id ON patient_profiles(user_id);
+CREATE TABLE IF NOT EXISTS medical_notes (
+  id TEXT PRIMARY KEY,
+  appointment_id TEXT NOT NULL UNIQUE,
+  doctor_id TEXT NOT NULL,
+  reason TEXT NOT NULL,
+  diagnosis TEXT NOT NULL,
+  treatment TEXT,
+  prescription_text TEXT,
+  instructions_text TEXT,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-CREATE INDEX IF NOT EXISTS idx_doctor_schedules_doctor_id ON doctor_schedules(doctor_id);
-CREATE INDEX IF NOT EXISTS idx_doctor_schedules_weekday ON doctor_schedules(weekday);
+  FOREIGN KEY (appointment_id)
+    REFERENCES appointments(id)
+    ON DELETE RESTRICT,
 
-CREATE INDEX IF NOT EXISTS idx_doctor_blocks_doctor_id ON doctor_blocks(doctor_id);
-CREATE INDEX IF NOT EXISTS idx_doctor_blocks_start_datetime ON doctor_blocks(start_datetime);
-CREATE INDEX IF NOT EXISTS idx_doctor_blocks_end_datetime ON doctor_blocks(end_datetime);
+  FOREIGN KEY (doctor_id)
+    REFERENCES doctor_profiles(id)
+    ON DELETE RESTRICT
+);
 
-CREATE INDEX IF NOT EXISTS idx_appointments_patient_id ON appointments(patient_id);
-CREATE INDEX IF NOT EXISTS idx_appointments_doctor_id ON appointments(doctor_id);
-CREATE INDEX IF NOT EXISTS idx_appointments_scheduled_date ON appointments(scheduled_date);
-CREATE INDEX IF NOT EXISTS idx_appointments_status ON appointments(status);
-CREATE INDEX IF NOT EXISTS idx_appointments_doctor_date_time ON appointments(doctor_id, scheduled_date, start_time, end_time);
+CREATE INDEX IF NOT EXISTS idx_users_email
+  ON users(email);
+
+CREATE INDEX IF NOT EXISTS idx_users_role
+  ON users(role);
+
+CREATE INDEX IF NOT EXISTS idx_users_is_active
+  ON users(is_active);
+
+CREATE INDEX IF NOT EXISTS idx_sessions_user_id
+  ON sessions(user_id);
+
+CREATE INDEX IF NOT EXISTS idx_sessions_expires_at
+  ON sessions(expires_at);
+
+CREATE INDEX IF NOT EXISTS idx_doctor_profiles_user_id
+  ON doctor_profiles(user_id);
+
+CREATE INDEX IF NOT EXISTS idx_staff_profiles_user_id
+  ON staff_profiles(user_id);
+
+CREATE INDEX IF NOT EXISTS idx_patient_profiles_user_id
+  ON patient_profiles(user_id);
+
+CREATE INDEX IF NOT EXISTS idx_doctor_schedules_doctor_id
+  ON doctor_schedules(doctor_id);
+
+CREATE INDEX IF NOT EXISTS idx_doctor_schedules_weekday
+  ON doctor_schedules(weekday);
+
+CREATE INDEX IF NOT EXISTS idx_doctor_blocks_doctor_id
+  ON doctor_blocks(doctor_id);
+
+CREATE INDEX IF NOT EXISTS idx_doctor_blocks_start_datetime
+  ON doctor_blocks(start_datetime);
+
+CREATE INDEX IF NOT EXISTS idx_doctor_blocks_end_datetime
+  ON doctor_blocks(end_datetime);
+
+CREATE INDEX IF NOT EXISTS idx_appointments_patient_id
+  ON appointments(patient_id);
+
+CREATE INDEX IF NOT EXISTS idx_appointments_doctor_id
+  ON appointments(doctor_id);
+
+CREATE INDEX IF NOT EXISTS idx_appointments_scheduled_date
+  ON appointments(scheduled_date);
+
+CREATE INDEX IF NOT EXISTS idx_appointments_status
+  ON appointments(status);
+
+CREATE INDEX IF NOT EXISTS idx_appointments_doctor_date_time
+  ON appointments(
+    doctor_id,
+    scheduled_date,
+    start_time,
+    end_time
+  );
+
+CREATE INDEX IF NOT EXISTS idx_medical_records_patient_id
+  ON medical_records(patient_id);
+
+CREATE INDEX IF NOT EXISTS idx_medical_notes_appointment_id
+  ON medical_notes(appointment_id);
+
+CREATE INDEX IF NOT EXISTS idx_medical_notes_doctor_id
+  ON medical_notes(doctor_id);
+
+CREATE INDEX IF NOT EXISTS idx_medical_notes_created_at
+  ON medical_notes(created_at);

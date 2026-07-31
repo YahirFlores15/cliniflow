@@ -44,6 +44,15 @@ export type DoctorScheduleDTO = {
     updatedAt: string;
 };
 
+export type DoctorBlockDTO = {
+    id: string;
+    doctorId: string;
+    startDateTime: string;
+    endDateTime: string;
+    reason: string | null;
+    createdAt: string;
+};
+
 export type DoctorAgendaSummaryDTO = {
     todayScheduled: number;
     upcomingScheduled: number;
@@ -55,6 +64,7 @@ export type DoctorAgendaDTO = {
     doctor: DoctorProfileDTO;
     appointments: DoctorAppointmentDTO[];
     schedules: DoctorScheduleDTO[];
+    blocks: DoctorBlockDTO[];
     summary: DoctorAgendaSummaryDTO;
 };
 
@@ -65,4 +75,17 @@ export type UpsertDoctorScheduleRepositoryInput = {
     endTime: string;
     appointmentDurationMinutes: 30 | 60;
     isActive: boolean;
+};
+
+export type CreateDoctorBlockRepositoryInput = {
+    doctorId: string;
+    startDateTime: string;
+    endDateTime: string;
+    reason: string;
+};
+
+export type CancelAppointmentsForDoctorBlockRepositoryInput = {
+    appointmentIds: string[];
+    cancelledByUserId: string;
+    cancellationReason: string;
 };

@@ -1,6 +1,14 @@
 import { z } from "zod";
 
 
+const DateSchema = z
+    .string()
+    .trim()
+    .regex(
+        /^\d{4}-\d{2}-\d{2}$/,
+        "La fecha debe tener el formato YYYY-MM-DD."
+    );
+
 const TimeSchema = z
     .string()
     .trim()
@@ -19,13 +27,7 @@ const OptionalDateSchema = z.preprocess(
 
         return normalizedValue || undefined;
     },
-    z
-        .string()
-        .regex(
-            /^\d{4}-\d{2}-\d{2}$/,
-            "La fecha debe tener el formato YYYY-MM-DD."
-        )
-        .optional()
+    DateSchema.optional()
 );
 
 const OptionalAppointmentStatusSchema = z.preprocess(
@@ -82,6 +84,29 @@ export const UpsertDoctorScheduleSchema = z.object({
     isActive: z.boolean(),
 });
 
+export const CreateDoctorBlockSchema = z.object({
+    startDate: DateSchema,
+    startTime: TimeSchema,
+    endDate: DateSchema,
+    endTime: TimeSchema,
+    reason: z
+        .string()
+        .trim()
+        .max(
+            500,
+            "El motivo no puede superar los 500 caracteres."
+        )
+        .optional()
+        .default(""),
+});
+
+export const DeleteDoctorBlockSchema = z.object({
+    blockId: z
+        .string()
+        .trim()
+        .min(1, "El bloqueo es obligatorio."),
+});
+
 export type DoctorAppointmentStatus = z.infer<
     typeof DoctorAppointmentStatusSchema
 >;
@@ -92,4 +117,12 @@ export type DoctorAgendaFilterInput = z.infer<
 
 export type UpsertDoctorScheduleInput = z.infer<
     typeof UpsertDoctorScheduleSchema
+>;
+
+export type CreateDoctorBlockInput = z.infer<
+    typeof CreateDoctorBlockSchema
+>;
+
+export type DeleteDoctorBlockInput = z.infer<
+    typeof DeleteDoctorBlockSchema
 >;

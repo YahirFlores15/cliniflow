@@ -1,4 +1,4 @@
-import type { DoctorAppointmentDTO, DoctorProfileDTO, DoctorScheduleDTO, UpsertDoctorScheduleRepositoryInput, } from "@/shared/dtos/doctor.dtos";
+import type { CancelAppointmentsForDoctorBlockRepositoryInput, CreateDoctorBlockRepositoryInput, DoctorAppointmentDTO, DoctorBlockDTO, DoctorProfileDTO, DoctorScheduleDTO, UpsertDoctorScheduleRepositoryInput, } from "@/shared/dtos/doctor.dtos";
 import type { DoctorAppointmentStatus, } from "@/shared/schemas/doctor.schemas";
 import { getDb } from "@/server/db/connection";
 import { nanoid } from "nanoid";
@@ -47,6 +47,15 @@ type DoctorScheduleRow = {
     is_active: number;
     created_at: string;
     updated_at: string;
+};
+
+type DoctorBlockRow = {
+    id: string;
+    doctor_id: string;
+    start_datetime: string;
+    end_datetime: string;
+    reason: string | null;
+    created_at: string;
 };
 
 function mapDoctorProfileRow(
@@ -103,6 +112,19 @@ function mapDoctorScheduleRow(
         isActive: row.is_active === 1,
         createdAt: row.created_at,
         updatedAt: row.updated_at,
+    };
+}
+
+function mapDoctorBlockRow(
+    row: DoctorBlockRow
+): DoctorBlockDTO {
+    return {
+        id: row.id,
+        doctorId: row.doctor_id,
+        startDateTime: row.start_datetime,
+        endDateTime: row.end_datetime,
+        reason: row.reason,
+        createdAt: row.created_at,
     };
 }
 
@@ -403,4 +425,210 @@ export function upsertDoctorSchedule(
     }
 
     return schedule;
+}
+
+export function listFutureDoctorBlocks(params: {
+    doctorId: string;
+    fromDateTime: string;
+}): DoctorBlockDTO[] {
+    const rows = db
+        .prepare(
+            `
+            SELECT
+                id,
+                doctor_id,
+                start_datetime,
+                end_datetime,
+                reason,
+                created_at
+            FROM doctor_blocks
+            WHERE doctor_id = ?
+              AND end_datetime > ?
+            ORDER BY start_datetime ASC
+            `
+        )
+        .all(
+            params.doctorId,
+            params.fromDateTime
+        ) as DoctorBlockRow[];
+
+    return rows.map(mapDoctorBlockRow);
+}
+
+export function findDoctorBlockById(params: {
+    doctorId: string;
+    blockId: string;
+}): DoctorBlockDTO | null {
+    const row = db
+        .prepare(
+            `
+            SELECT
+                id,
+                doctor_id,
+                start_datetime,
+                end_datetime,
+                reason,
+                created_at
+            FROM doctor_blocks
+            WHERE doctor_id = ?
+              AND id = ?
+            LIMIT 1
+            `
+        )
+        .get(
+            params.doctorId,
+            params.blockId
+        ) as DoctorBlockRow | undefined;
+
+    return row ? mapDoctorBlockRow(row) : null;
+}
+
+export function hasDoctorBlockOverlap(params: {
+    doctorId: string;
+    startDateTime: string;
+    endDateTime: string;
+}): boolean {
+    const row = db
+        .prepare(
+            `
+            SELECT id
+            FROM doctor_blocks
+            WHERE doctor_id = ?
+              AND start_datetime < ?
+              AND end_datetime > ?
+            LIMIT 1
+            `
+        )
+        .get(
+            params.doctorId,
+            params.endDateTime,
+            params.startDateTime
+        ) as { id: string } | undefined;
+
+    return Boolean(row);
+}
+
+export function listScheduledAppointmentIdsAffectedByBlock(
+    params: {
+        doctorId: string;
+        startDateTime: string;
+        endDateTime: string;
+    }
+): string[] {
+    const rows = db
+        .prepare(
+            `
+            SELECT id
+            FROM appointments
+            WHERE doctor_id = ?
+              AND status = 'SCHEDULED'
+              AND (
+                  scheduled_date || 'T' || start_time
+              ) < ?
+              AND (
+                  scheduled_date || 'T' || end_time
+              ) > ?
+            ORDER BY
+                scheduled_date ASC,
+                start_time ASC
+            `
+        )
+        .all(
+            params.doctorId,
+            params.endDateTime,
+            params.startDateTime
+        ) as Array<{ id: string }>;
+
+    return rows.map((row) => row.id);
+}
+
+export function createDoctorBlock(
+    params: CreateDoctorBlockRepositoryInput
+): DoctorBlockDTO {
+    const blockId = nanoid();
+
+    db.prepare(
+        `
+        INSERT INTO doctor_blocks (
+            id,
+            doctor_id,
+            start_datetime,
+            end_datetime,
+            reason
+        )
+        VALUES (?, ?, ?, ?, ?)
+        `
+    ).run(
+        blockId,
+        params.doctorId,
+        params.startDateTime,
+        params.endDateTime,
+        params.reason || null
+    );
+
+    const block = findDoctorBlockById({
+        doctorId: params.doctorId,
+        blockId,
+    });
+
+    if (!block) {
+        throw new Error(
+            "No se pudo crear el bloqueo."
+        );
+    }
+
+    return block;
+}
+
+export function cancelAppointmentsForDoctorBlock(
+    params: CancelAppointmentsForDoctorBlockRepositoryInput
+): number {
+    if (params.appointmentIds.length === 0) {
+        return 0;
+    }
+
+    const placeholders = params.appointmentIds
+        .map(() => "?")
+        .join(", ");
+
+    const result = db
+        .prepare(
+            `
+            UPDATE appointments
+            SET status = 'CANCELLED',
+                cancellation_reason = ?,
+                cancelled_at = CURRENT_TIMESTAMP,
+                cancelled_by_user_id = ?,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE status = 'SCHEDULED'
+              AND id IN (${placeholders})
+            `
+        )
+        .run(
+            params.cancellationReason,
+            params.cancelledByUserId,
+            ...params.appointmentIds
+        );
+
+    return result.changes;
+}
+
+export function deleteDoctorBlock(params: {
+    doctorId: string;
+    blockId: string;
+}): boolean {
+    const result = db
+        .prepare(
+            `
+            DELETE FROM doctor_blocks
+            WHERE doctor_id = ?
+              AND id = ?
+            `
+        )
+        .run(
+            params.doctorId,
+            params.blockId
+        );
+
+    return result.changes > 0;
 }

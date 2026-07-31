@@ -14,12 +14,14 @@ import {
     Clock3,
     FileHeart,
     FileText,
+    NotebookPen,
     Save,
     Stethoscope,
     Trash2,
     UserRound,
 } from "lucide-react";
 
+import MedicalNotePanel from "@/app/(protected)/doctor/medical-note-panel";
 import MedicalRecordPanel from "@/app/(protected)/doctor/medical-record-panel";
 import {
     createDoctorBlockAction,
@@ -88,13 +90,14 @@ function getLocalCalendarDate(): string {
     const date = new Date();
 
     const year = date.getFullYear();
+
     const month = String(
         date.getMonth() + 1
     ).padStart(2, "0");
-    const day = String(date.getDate()).padStart(
-        2,
-        "0"
-    );
+
+    const day = String(
+        date.getDate()
+    ).padStart(2, "0");
 
     return `${year}-${month}-${day}`;
 }
@@ -117,12 +120,15 @@ function formatCalendarDate(
         Number(match[3])
     );
 
-    return new Intl.DateTimeFormat("es-MX", {
-        weekday: "long",
-        day: "2-digit",
-        month: "long",
-        year: "numeric",
-    }).format(parsedDate);
+    return new Intl.DateTimeFormat(
+        "es-MX",
+        {
+            weekday: "long",
+            day: "2-digit",
+            month: "long",
+            year: "numeric",
+        }
+    ).format(parsedDate);
 }
 
 function formatDateTime(
@@ -145,14 +151,17 @@ function formatDateTime(
         Number(match[5])
     );
 
-    return new Intl.DateTimeFormat("es-MX", {
-        weekday: "short",
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-    }).format(parsedDate);
+    return new Intl.DateTimeFormat(
+        "es-MX",
+        {
+            weekday: "short",
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+        }
+    ).format(parsedDate);
 }
 
 function formatPatientAge(
@@ -178,13 +187,16 @@ function formatPatientAge(
     const today = new Date();
 
     let age =
-        today.getFullYear() - birthYear;
+        today.getFullYear() -
+        birthYear;
 
     const hasNotHadBirthday =
-        today.getMonth() + 1 < birthMonth ||
+        today.getMonth() + 1 <
+        birthMonth ||
         (today.getMonth() + 1 ===
             birthMonth &&
-            today.getDate() < birthDay);
+            today.getDate() <
+            birthDay);
 
     if (hasNotHadBirthday) {
         age -= 1;
@@ -196,31 +208,52 @@ function formatPatientAge(
 function AppointmentCard({
     appointment,
     onOpenMedicalRecord,
+    onOpenMedicalNote,
 }: {
     appointment: DoctorAppointmentDTO;
     onOpenMedicalRecord: (
         patientId: string
     ) => void;
+    onOpenMedicalNote: (
+        appointmentId: string
+    ) => void;
 }) {
-    const patientAge = formatPatientAge(
-        appointment.patientBirthDate
-    );
+    const patientAge =
+        formatPatientAge(
+            appointment.patientBirthDate
+        );
+
+    function scrollToElement(
+        elementId: string
+    ) {
+        window.setTimeout(() => {
+            document
+                .getElementById(elementId)
+                ?.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start",
+                });
+        }, 0);
+    }
 
     function handleOpenMedicalRecord() {
         onOpenMedicalRecord(
             appointment.patientId
         );
 
-        window.setTimeout(() => {
-            document
-                .getElementById(
-                    "medical-record"
-                )
-                ?.scrollIntoView({
-                    behavior: "smooth",
-                    block: "start",
-                });
-        }, 0);
+        scrollToElement(
+            "medical-record"
+        );
+    }
+
+    function handleOpenMedicalNote() {
+        onOpenMedicalNote(
+            appointment.id
+        );
+
+        scrollToElement(
+            "medical-note"
+        );
     }
 
     return (
@@ -246,6 +279,7 @@ function AppointmentCard({
                         {appointment.hasMedicalNote ? (
                             <span className="inline-flex items-center gap-1 rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-xs font-semibold text-violet-800">
                                 <FileText className="h-3.5 w-3.5" />
+
                                 Nota registrada
                             </span>
                         ) : null}
@@ -347,7 +381,7 @@ function AppointmentCard({
                     </div>
                 ) : null}
 
-                <div className="mt-4 flex justify-end">
+                <div className="mt-4 flex flex-wrap justify-end gap-3">
                     <button
                         type="button"
                         onClick={
@@ -358,6 +392,20 @@ function AppointmentCard({
                         <FileHeart className="h-4 w-4" />
 
                         Abrir expediente
+                    </button>
+
+                    <button
+                        type="button"
+                        onClick={
+                            handleOpenMedicalNote
+                        }
+                        className="inline-flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-800 transition hover:bg-blue-100"
+                    >
+                        <NotebookPen className="h-4 w-4" />
+
+                        {appointment.hasMedicalNote
+                            ? "Ver nota"
+                            : "Crear nota"}
                     </button>
                 </div>
             </div>
@@ -396,8 +444,7 @@ function ScheduleDayForm({
                     </h3>
 
                     <p className="mt-1 text-sm text-slate-500">
-                        Configura la disponibilidad de este
-                        día.
+                        Configura la disponibilidad de este día.
                     </p>
                 </div>
 
@@ -406,7 +453,8 @@ function ScheduleDayForm({
                         type="checkbox"
                         name="isActive"
                         defaultChecked={
-                            schedule?.isActive ?? false
+                            schedule?.isActive ??
+                            false
                         }
                         className="h-4 w-4 rounded border-slate-300 text-cyan-700 focus:ring-cyan-500"
                     />
@@ -614,7 +662,8 @@ function DoctorBlocksSection({
             initialActionState
         );
 
-    const today = getLocalCalendarDate();
+    const today =
+        getLocalCalendarDate();
 
     return (
         <section className="mt-10 border-t border-slate-200 pt-10">
@@ -625,9 +674,8 @@ function DoctorBlocksSection({
 
                 <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-600">
                     Bloquea periodos en los que no podrás
-                    atender. Las citas programadas dentro
-                    del rango se cancelarán
-                    automáticamente.
+                    atender. Las citas dentro del rango se
+                    cancelarán automáticamente.
                 </p>
             </div>
 
@@ -743,18 +791,19 @@ function DoctorBlocksSection({
                         <Ban className="mx-auto h-8 w-8 text-slate-400" />
 
                         <p className="mt-3 text-sm text-slate-600">
-                            No tienes bloqueos vigentes o
-                            futuros.
+                            No tienes bloqueos vigentes o futuros.
                         </p>
                     </div>
                 ) : (
                     <div className="mt-4 grid gap-4">
-                        {blocks.map((block) => (
-                            <DoctorBlockCard
-                                key={block.id}
-                                block={block}
-                            />
-                        ))}
+                        {blocks.map(
+                            (block) => (
+                                <DoctorBlockCard
+                                    key={block.id}
+                                    block={block}
+                                />
+                            )
+                        )}
                     </div>
                 )}
             </div>
@@ -769,20 +818,58 @@ export default function DoctorPanel({
     const [
         selectedPatientId,
         setSelectedPatientId,
-    ] = useState<string | null>(null);
-
-    const selectedMedicalRecord = useMemo(
-        () =>
-            agenda.medicalRecords.find(
-                (record) =>
-                    record.patientId ===
-                    selectedPatientId
-            ) ?? null,
-        [
-            agenda.medicalRecords,
-            selectedPatientId,
-        ]
+    ] = useState<string | null>(
+        null
     );
+
+    const [
+        selectedAppointmentId,
+        setSelectedAppointmentId,
+    ] = useState<string | null>(
+        null
+    );
+
+    const selectedMedicalRecord =
+        useMemo(
+            () =>
+                agenda.medicalRecords.find(
+                    (record) =>
+                        record.patientId ===
+                        selectedPatientId
+                ) ?? null,
+            [
+                agenda.medicalRecords,
+                selectedPatientId,
+            ]
+        );
+
+    const selectedAppointment =
+        useMemo(
+            () =>
+                agenda.appointments.find(
+                    (appointment) =>
+                        appointment.id ===
+                        selectedAppointmentId
+                ) ?? null,
+            [
+                agenda.appointments,
+                selectedAppointmentId,
+            ]
+        );
+
+    const selectedMedicalNote =
+        useMemo(
+            () =>
+                agenda.medicalNotes.find(
+                    (note) =>
+                        note.appointmentId ===
+                        selectedAppointmentId
+                ) ?? null,
+            [
+                agenda.medicalNotes,
+                selectedAppointmentId,
+            ]
+        );
 
     return (
         <div>
@@ -802,7 +889,8 @@ export default function DoctorPanel({
                             "Especialidad no registrada"}
                     </span>
 
-                    {agenda.doctor.licenseNumber ? (
+                    {agenda.doctor
+                        .licenseNumber ? (
                         <>
                             <span className="text-slate-300">
                                 ·
@@ -811,7 +899,8 @@ export default function DoctorPanel({
                             <span>
                                 Cédula{" "}
                                 {
-                                    agenda.doctor
+                                    agenda
+                                        .doctor
                                         .licenseNumber
                                 }
                             </span>
@@ -855,7 +944,10 @@ export default function DoctorPanel({
                     <CheckCircle2 className="h-5 w-5 text-emerald-700" />
 
                     <p className="mt-4 text-3xl font-bold text-emerald-950">
-                        {agenda.summary.completed}
+                        {
+                            agenda.summary
+                                .completed
+                        }
                     </p>
 
                     <p className="mt-1 text-sm font-medium text-emerald-800">
@@ -867,7 +959,10 @@ export default function DoctorPanel({
                     <CircleX className="h-5 w-5 text-red-700" />
 
                     <p className="mt-4 text-3xl font-bold text-red-950">
-                        {agenda.summary.cancelled}
+                        {
+                            agenda.summary
+                                .cancelled
+                        }
                     </p>
 
                     <p className="mt-1 text-sm font-medium text-red-800">
@@ -888,8 +983,7 @@ export default function DoctorPanel({
                         </h2>
 
                         <p className="text-sm text-slate-600">
-                            Consulta tus citas por fecha o
-                            estado.
+                            Consulta tus citas por fecha o estado.
                         </p>
                     </div>
                 </div>
@@ -967,8 +1061,8 @@ export default function DoctorPanel({
                         </h2>
 
                         <p className="mt-1 text-sm text-slate-600">
-                            Solo se muestran citas asignadas
-                            a tu perfil médico.
+                            Solo se muestran citas asignadas a
+                            tu perfil médico.
                         </p>
                     </div>
 
@@ -1005,6 +1099,9 @@ export default function DoctorPanel({
                                     onOpenMedicalRecord={
                                         setSelectedPatientId
                                     }
+                                    onOpenMedicalNote={
+                                        setSelectedAppointmentId
+                                    }
                                 />
                             )
                         )}
@@ -1017,7 +1114,9 @@ export default function DoctorPanel({
                     key={
                         selectedMedicalRecord.patientId
                     }
-                    record={selectedMedicalRecord}
+                    record={
+                        selectedMedicalRecord
+                    }
                 />
             ) : (
                 <section className="mt-10 border-t border-slate-200 pt-10">
@@ -1029,11 +1128,39 @@ export default function DoctorPanel({
                         </h2>
 
                         <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-violet-800">
-                            Utiliza el botón “Abrir
-                            expediente” desde una cita para
-                            consultar o actualizar la
-                            información clínica permanente
-                            del paciente.
+                            Utiliza “Abrir expediente” desde
+                            una cita para consultar o actualizar
+                            la información clínica permanente.
+                        </p>
+                    </div>
+                </section>
+            )}
+
+            {selectedAppointment ? (
+                <MedicalNotePanel
+                    key={
+                        selectedAppointment.id
+                    }
+                    appointment={
+                        selectedAppointment
+                    }
+                    note={
+                        selectedMedicalNote
+                    }
+                />
+            ) : (
+                <section className="mt-10 border-t border-slate-200 pt-10">
+                    <div className="rounded-2xl border border-dashed border-blue-300 bg-blue-50 px-6 py-10 text-center">
+                        <NotebookPen className="mx-auto h-8 w-8 text-blue-500" />
+
+                        <h2 className="mt-4 font-semibold text-blue-950">
+                            Selecciona una consulta
+                        </h2>
+
+                        <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-blue-800">
+                            Utiliza “Crear nota” o “Ver nota”
+                            desde una cita para abrir su
+                            información clínica.
                         </p>
                     </div>
                 </section>
@@ -1047,29 +1174,37 @@ export default function DoctorPanel({
 
                     <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-600">
                         Configura los días y horas en los que
-                        el personal podrá programar citas.
-                        No podrás desactivar o reducir un
-                        horario si deja citas futuras fuera.
+                        el personal podrá programar citas. No
+                        podrás desactivar o reducir un horario
+                        si deja citas futuras fuera.
                     </p>
                 </div>
 
                 <div className="mt-5 grid gap-4 xl:grid-cols-2">
-                    {weekdays.map((weekday) => {
-                        const schedule =
-                            agenda.schedules.find(
-                                (item) =>
-                                    item.weekday ===
-                                    weekday.value
-                            ) ?? null;
+                    {weekdays.map(
+                        (weekday) => {
+                            const schedule =
+                                agenda.schedules.find(
+                                    (item) =>
+                                        item.weekday ===
+                                        weekday.value
+                                ) ?? null;
 
-                        return (
-                            <ScheduleDayForm
-                                key={weekday.value}
-                                weekday={weekday}
-                                schedule={schedule}
-                            />
-                        );
-                    })}
+                            return (
+                                <ScheduleDayForm
+                                    key={
+                                        weekday.value
+                                    }
+                                    weekday={
+                                        weekday
+                                    }
+                                    schedule={
+                                        schedule
+                                    }
+                                />
+                            );
+                        }
+                    )}
                 </div>
             </section>
 

@@ -69,6 +69,25 @@ export type MedicalRecordDTO = {
     updatedAt: string | null;
 };
 
+export type MedicalNoteDTO = {
+    id: string;
+    appointmentId: string;
+    doctorId: string;
+    patientId: string;
+    patientName: string;
+    patientEmail: string;
+    scheduledDate: string;
+    startTime: string;
+    endTime: string;
+    reason: string;
+    diagnosis: string;
+    treatment: string | null;
+    prescriptionText: string | null;
+    instructionsText: string | null;
+    createdAt: string;
+    updatedAt: string;
+};
+
 export type DoctorAgendaSummaryDTO = {
     todayScheduled: number;
     upcomingScheduled: number;
@@ -82,6 +101,7 @@ export type DoctorAgendaDTO = {
     schedules: DoctorScheduleDTO[];
     blocks: DoctorBlockDTO[];
     medicalRecords: MedicalRecordDTO[];
+    medicalNotes: MedicalNoteDTO[];
     summary: DoctorAgendaSummaryDTO;
 };
 
@@ -114,4 +134,14 @@ export type UpsertMedicalRecordRepositoryInput = {
     currentMedications: string;
     emergencyContactName: string;
     emergencyContactPhone: string;
+};
+
+export type CreateMedicalNoteRepositoryInput = {
+    appointmentId: string;
+    doctorId: string;
+    reason: string;
+    diagnosis: string;
+    treatment: string;
+    prescriptionText: string;
+    instructionsText: string;
 };

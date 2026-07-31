@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { requireRole } from "@/server/auth/session";
 import {
     createBlockForDoctor,
+    createMedicalNoteForDoctor,
     deleteBlockForDoctor,
     DoctorDomainError,
     saveDoctorSchedule,
@@ -13,6 +14,7 @@ import {
 import { ROLES } from "@/shared/constants/roles";
 import {
     CreateDoctorBlockSchema,
+    CreateMedicalNoteSchema,
     DeleteDoctorBlockSchema,
     UpdateMedicalRecordSchema,
     UpsertDoctorScheduleSchema,
@@ -26,7 +28,10 @@ export type DoctorActionState = {
 function getActionErrorState(
     error: unknown
 ): DoctorActionState {
-    if (error instanceof DoctorDomainError) {
+    if (
+        error instanceof
+        DoctorDomainError
+    ) {
         return {
             ok: false,
             message: error.message,
@@ -46,9 +51,10 @@ export async function saveDoctorScheduleAction(
     _previousState: DoctorActionState,
     formData: FormData
 ): Promise<DoctorActionState> {
-    const session = await requireRole([
-        ROLES.DOCTOR,
-    ]);
+    const session =
+        await requireRole([
+            ROLES.DOCTOR,
+        ]);
 
     const rawData = {
         weekday: String(
@@ -60,13 +66,15 @@ export async function saveDoctorScheduleAction(
         endTime: String(
             formData.get("endTime") ?? ""
         ),
-        appointmentDurationMinutes: String(
-            formData.get(
-                "appointmentDurationMinutes"
-            ) ?? ""
-        ),
+        appointmentDurationMinutes:
+            String(
+                formData.get(
+                    "appointmentDurationMinutes"
+                ) ?? ""
+            ),
         isActive:
-            formData.get("isActive") === "on",
+            formData.get("isActive") ===
+            "on",
     };
 
     const parsed =
@@ -78,15 +86,18 @@ export async function saveDoctorScheduleAction(
         return {
             ok: false,
             message:
-                parsed.error.issues[0]?.message ??
+                parsed.error.issues[0]
+                    ?.message ??
                 "Los datos del horario no son válidos.",
         };
     }
 
     try {
         saveDoctorSchedule({
-            userId: session.user.id,
-            input: parsed.data,
+            userId:
+                session.user.id,
+            input:
+                parsed.data,
         });
 
         revalidatePath("/doctor");
@@ -97,7 +108,9 @@ export async function saveDoctorScheduleAction(
                 "Horario guardado correctamente.",
         };
     } catch (error) {
-        return getActionErrorState(error);
+        return getActionErrorState(
+            error
+        );
     }
 }
 
@@ -105,25 +118,36 @@ export async function createDoctorBlockAction(
     _previousState: DoctorActionState,
     formData: FormData
 ): Promise<DoctorActionState> {
-    const session = await requireRole([
-        ROLES.DOCTOR,
-    ]);
+    const session =
+        await requireRole([
+            ROLES.DOCTOR,
+        ]);
 
     const rawData = {
         startDate: String(
-            formData.get("startDate") ?? ""
+            formData.get(
+                "startDate"
+            ) ?? ""
         ),
         startTime: String(
-            formData.get("startTime") ?? ""
+            formData.get(
+                "startTime"
+            ) ?? ""
         ),
         endDate: String(
-            formData.get("endDate") ?? ""
+            formData.get(
+                "endDate"
+            ) ?? ""
         ),
         endTime: String(
-            formData.get("endTime") ?? ""
+            formData.get(
+                "endTime"
+            ) ?? ""
         ),
         reason: String(
-            formData.get("reason") ?? ""
+            formData.get(
+                "reason"
+            ) ?? ""
         ),
     };
 
@@ -136,22 +160,27 @@ export async function createDoctorBlockAction(
         return {
             ok: false,
             message:
-                parsed.error.issues[0]?.message ??
+                parsed.error.issues[0]
+                    ?.message ??
                 "Los datos del bloqueo no son válidos.",
         };
     }
 
     try {
-        const result = createBlockForDoctor({
-            userId: session.user.id,
-            input: parsed.data,
-        });
+        const result =
+            createBlockForDoctor({
+                userId:
+                    session.user.id,
+                input:
+                    parsed.data,
+            });
 
         revalidatePath("/doctor");
         revalidatePath("/staff");
 
         if (
-            result.cancelledAppointments > 0
+            result.cancelledAppointments >
+            0
         ) {
             return {
                 ok: true,
@@ -166,7 +195,9 @@ export async function createDoctorBlockAction(
                 "Bloqueo creado correctamente. No había citas afectadas.",
         };
     } catch (error) {
-        return getActionErrorState(error);
+        return getActionErrorState(
+            error
+        );
     }
 }
 
@@ -174,13 +205,16 @@ export async function deleteDoctorBlockAction(
     _previousState: DoctorActionState,
     formData: FormData
 ): Promise<DoctorActionState> {
-    const session = await requireRole([
-        ROLES.DOCTOR,
-    ]);
+    const session =
+        await requireRole([
+            ROLES.DOCTOR,
+        ]);
 
     const rawData = {
         blockId: String(
-            formData.get("blockId") ?? ""
+            formData.get(
+                "blockId"
+            ) ?? ""
         ),
     };
 
@@ -193,15 +227,18 @@ export async function deleteDoctorBlockAction(
         return {
             ok: false,
             message:
-                parsed.error.issues[0]?.message ??
+                parsed.error.issues[0]
+                    ?.message ??
                 "El bloqueo no es válido.",
         };
     }
 
     try {
         deleteBlockForDoctor({
-            userId: session.user.id,
-            input: parsed.data,
+            userId:
+                session.user.id,
+            input:
+                parsed.data,
         });
 
         revalidatePath("/doctor");
@@ -213,7 +250,9 @@ export async function deleteDoctorBlockAction(
                 "Bloqueo eliminado correctamente. Las citas canceladas previamente no fueron reactivadas.",
         };
     } catch (error) {
-        return getActionErrorState(error);
+        return getActionErrorState(
+            error
+        );
     }
 }
 
@@ -221,22 +260,31 @@ export async function saveMedicalRecordAction(
     _previousState: DoctorActionState,
     formData: FormData
 ): Promise<DoctorActionState> {
-    const session = await requireRole([
-        ROLES.DOCTOR,
-    ]);
+    const session =
+        await requireRole([
+            ROLES.DOCTOR,
+        ]);
 
     const rawData = {
         patientId: String(
-            formData.get("patientId") ?? ""
+            formData.get(
+                "patientId"
+            ) ?? ""
         ),
         allergies: String(
-            formData.get("allergies") ?? ""
+            formData.get(
+                "allergies"
+            ) ?? ""
         ),
         chronicDiseases: String(
-            formData.get("chronicDiseases") ?? ""
+            formData.get(
+                "chronicDiseases"
+            ) ?? ""
         ),
         currentMedications: String(
-            formData.get("currentMedications") ?? ""
+            formData.get(
+                "currentMedications"
+            ) ?? ""
         ),
         emergencyContactName: String(
             formData.get(
@@ -259,15 +307,18 @@ export async function saveMedicalRecordAction(
         return {
             ok: false,
             message:
-                parsed.error.issues[0]?.message ??
+                parsed.error.issues[0]
+                    ?.message ??
                 "Los datos del expediente no son válidos.",
         };
     }
 
     try {
         saveMedicalRecordForDoctor({
-            userId: session.user.id,
-            input: parsed.data,
+            userId:
+                session.user.id,
+            input:
+                parsed.data,
         });
 
         revalidatePath("/doctor");
@@ -279,6 +330,88 @@ export async function saveMedicalRecordAction(
                 "Expediente clínico guardado correctamente.",
         };
     } catch (error) {
-        return getActionErrorState(error);
+        return getActionErrorState(
+            error
+        );
+    }
+}
+
+export async function createMedicalNoteAction(
+    _previousState: DoctorActionState,
+    formData: FormData
+): Promise<DoctorActionState> {
+    const session =
+        await requireRole([
+            ROLES.DOCTOR,
+        ]);
+
+    const rawData = {
+        appointmentId: String(
+            formData.get(
+                "appointmentId"
+            ) ?? ""
+        ),
+        reason: String(
+            formData.get(
+                "reason"
+            ) ?? ""
+        ),
+        diagnosis: String(
+            formData.get(
+                "diagnosis"
+            ) ?? ""
+        ),
+        treatment: String(
+            formData.get(
+                "treatment"
+            ) ?? ""
+        ),
+        prescriptionText: String(
+            formData.get(
+                "prescriptionText"
+            ) ?? ""
+        ),
+        instructionsText: String(
+            formData.get(
+                "instructionsText"
+            ) ?? ""
+        ),
+    };
+
+    const parsed =
+        CreateMedicalNoteSchema.safeParse(
+            rawData
+        );
+
+    if (!parsed.success) {
+        return {
+            ok: false,
+            message:
+                parsed.error.issues[0]
+                    ?.message ??
+                "Los datos de la nota médica no son válidos.",
+        };
+    }
+
+    try {
+        createMedicalNoteForDoctor({
+            userId:
+                session.user.id,
+            input:
+                parsed.data,
+        });
+
+        revalidatePath("/doctor");
+        revalidatePath("/patient");
+
+        return {
+            ok: true,
+            message:
+                "Nota médica registrada correctamente.",
+        };
+    } catch (error) {
+        return getActionErrorState(
+            error
+        );
     }
 }

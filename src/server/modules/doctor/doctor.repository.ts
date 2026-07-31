@@ -1,4 +1,4 @@
-import type { CancelAppointmentsForDoctorBlockRepositoryInput, CreateDoctorBlockRepositoryInput, DoctorAppointmentDTO, DoctorBlockDTO, DoctorProfileDTO, DoctorScheduleDTO, MedicalRecordDTO, UpsertDoctorScheduleRepositoryInput, UpsertMedicalRecordRepositoryInput, } from "@/shared/dtos/doctor.dtos";
+import type { CancelAppointmentsForDoctorBlockRepositoryInput, CreateDoctorBlockRepositoryInput, CreateMedicalNoteRepositoryInput, DoctorAppointmentDTO, DoctorBlockDTO, DoctorProfileDTO, DoctorScheduleDTO, MedicalNoteDTO, MedicalRecordDTO, UpsertDoctorScheduleRepositoryInput, UpsertMedicalRecordRepositoryInput, } from "@/shared/dtos/doctor.dtos";
 import type { DoctorAppointmentStatus, } from "@/shared/schemas/doctor.schemas";
 import { getDb } from "@/server/db/connection";
 import { nanoid } from "nanoid";
@@ -13,7 +13,9 @@ type DoctorProfileRow = {
     email: string;
     specialty: string | null;
     license_number: string | null;
-    default_appointment_duration_minutes: 30 | 60;
+    default_appointment_duration_minutes:
+    | 30
+    | 60;
     is_active: number;
 };
 
@@ -43,7 +45,9 @@ type DoctorScheduleRow = {
     weekday: number;
     start_time: string;
     end_time: string;
-    appointment_duration_minutes: 30 | 60;
+    appointment_duration_minutes:
+    | 30
+    | 60;
     is_active: number;
     created_at: string;
     updated_at: string;
@@ -68,10 +72,33 @@ type MedicalRecordRow = {
     allergies: string | null;
     chronic_diseases: string | null;
     current_medications: string | null;
-    emergency_contact_name: string | null;
-    emergency_contact_phone: string | null;
+    emergency_contact_name:
+    | string
+    | null;
+    emergency_contact_phone:
+    | string
+    | null;
     created_at: string | null;
     updated_at: string | null;
+};
+
+type MedicalNoteRow = {
+    id: string;
+    appointment_id: string;
+    doctor_id: string;
+    patient_id: string;
+    patient_name: string;
+    patient_email: string;
+    scheduled_date: string;
+    start_time: string;
+    end_time: string;
+    reason: string;
+    diagnosis: string;
+    treatment: string | null;
+    prescription_text: string | null;
+    instructions_text: string | null;
+    created_at: string;
+    updated_at: string;
 };
 
 function mapDoctorProfileRow(
@@ -83,7 +110,8 @@ function mapDoctorProfileRow(
         name: row.name,
         email: row.email,
         specialty: row.specialty,
-        licenseNumber: row.license_number,
+        licenseNumber:
+            row.license_number,
         defaultAppointmentDurationMinutes:
             row.default_appointment_duration_minutes,
         isActive: row.is_active === 1,
@@ -96,21 +124,29 @@ function mapDoctorAppointmentRow(
     return {
         id: row.id,
         patientId: row.patient_id,
-        patientUserId: row.patient_user_id,
+        patientUserId:
+            row.patient_user_id,
         patientName: row.patient_name,
-        patientEmail: row.patient_email,
-        patientPhone: row.patient_phone,
-        patientBirthDate: row.patient_birth_date,
-        scheduledDate: row.scheduled_date,
+        patientEmail:
+            row.patient_email,
+        patientPhone:
+            row.patient_phone,
+        patientBirthDate:
+            row.patient_birth_date,
+        scheduledDate:
+            row.scheduled_date,
         startTime: row.start_time,
         endTime: row.end_time,
-        durationMinutes: row.duration_minutes,
+        durationMinutes:
+            row.duration_minutes,
         status: row.status,
         reason: row.reason,
-        cancellationReason: row.cancellation_reason,
+        cancellationReason:
+            row.cancellation_reason,
         createdAt: row.created_at,
         updatedAt: row.updated_at,
-        hasMedicalNote: row.has_medical_note === 1,
+        hasMedicalNote:
+            row.has_medical_note === 1,
     };
 }
 
@@ -125,7 +161,8 @@ function mapDoctorScheduleRow(
         endTime: row.end_time,
         appointmentDurationMinutes:
             row.appointment_duration_minutes,
-        isActive: row.is_active === 1,
+        isActive:
+            row.is_active === 1,
         createdAt: row.created_at,
         updatedAt: row.updated_at,
     };
@@ -137,8 +174,10 @@ function mapDoctorBlockRow(
     return {
         id: row.id,
         doctorId: row.doctor_id,
-        startDateTime: row.start_datetime,
-        endDateTime: row.end_datetime,
+        startDateTime:
+            row.start_datetime,
+        endDateTime:
+            row.end_datetime,
         reason: row.reason,
         createdAt: row.created_at,
     };
@@ -150,13 +189,19 @@ function mapMedicalRecordRow(
     return {
         id: row.id,
         patientId: row.patient_id,
-        patientName: row.patient_name,
-        patientEmail: row.patient_email,
-        patientPhone: row.patient_phone,
-        patientBirthDate: row.patient_birth_date,
+        patientName:
+            row.patient_name,
+        patientEmail:
+            row.patient_email,
+        patientPhone:
+            row.patient_phone,
+        patientBirthDate:
+            row.patient_birth_date,
         allergies: row.allergies,
-        chronicDiseases: row.chronic_diseases,
-        currentMedications: row.current_medications,
+        chronicDiseases:
+            row.chronic_diseases,
+        currentMedications:
+            row.current_medications,
         emergencyContactName:
             row.emergency_contact_name,
         emergencyContactPhone:
@@ -165,6 +210,68 @@ function mapMedicalRecordRow(
         updatedAt: row.updated_at,
     };
 }
+
+function mapMedicalNoteRow(
+    row: MedicalNoteRow
+): MedicalNoteDTO {
+    return {
+        id: row.id,
+        appointmentId:
+            row.appointment_id,
+        doctorId: row.doctor_id,
+        patientId: row.patient_id,
+        patientName:
+            row.patient_name,
+        patientEmail:
+            row.patient_email,
+        scheduledDate:
+            row.scheduled_date,
+        startTime: row.start_time,
+        endTime: row.end_time,
+        reason: row.reason,
+        diagnosis: row.diagnosis,
+        treatment: row.treatment,
+        prescriptionText:
+            row.prescription_text,
+        instructionsText:
+            row.instructions_text,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+    };
+}
+
+const medicalNoteSelect = `
+    SELECT
+        medical_notes.id,
+        medical_notes.appointment_id,
+        medical_notes.doctor_id,
+        appointments.patient_id,
+        patient_users.name
+            AS patient_name,
+        patient_users.email
+            AS patient_email,
+        appointments.scheduled_date,
+        appointments.start_time,
+        appointments.end_time,
+        medical_notes.reason,
+        medical_notes.diagnosis,
+        medical_notes.treatment,
+        medical_notes.prescription_text,
+        medical_notes.instructions_text,
+        medical_notes.created_at,
+        medical_notes.updated_at
+    FROM medical_notes
+    INNER JOIN appointments
+        ON appointments.id =
+            medical_notes.appointment_id
+    INNER JOIN patient_profiles
+        ON patient_profiles.id =
+            appointments.patient_id
+    INNER JOIN users
+        AS patient_users
+        ON patient_users.id =
+            patient_profiles.user_id
+`;
 
 export function findDoctorProfileByUserId(
     userId: string
@@ -183,37 +290,52 @@ export function findDoctorProfileByUserId(
                 users.is_active
             FROM doctor_profiles
             INNER JOIN users
-                ON users.id = doctor_profiles.user_id
+                ON users.id =
+                    doctor_profiles.user_id
             WHERE doctor_profiles.user_id = ?
               AND users.role = 'DOCTOR'
             LIMIT 1
             `
         )
-        .get(userId) as DoctorProfileRow | undefined;
+        .get(userId) as
+        | DoctorProfileRow
+        | undefined;
 
-    return row ? mapDoctorProfileRow(row) : null;
+    return row
+        ? mapDoctorProfileRow(row)
+        : null;
 }
 
-export function listAppointmentsForDoctor(params: {
-    doctorId: string;
-    scheduledDate?: string;
-    status?: DoctorAppointmentStatus;
-}): DoctorAppointmentDTO[] {
+export function listAppointmentsForDoctor(
+    params: {
+        doctorId: string;
+        scheduledDate?: string;
+        status?: DoctorAppointmentStatus;
+    }
+): DoctorAppointmentDTO[] {
     const conditions = [
         "appointments.doctor_id = ?",
     ];
 
-    const values: string[] = [params.doctorId];
+    const values: string[] = [
+        params.doctorId,
+    ];
 
     if (params.scheduledDate) {
         conditions.push(
             "appointments.scheduled_date = ?"
         );
-        values.push(params.scheduledDate);
+
+        values.push(
+            params.scheduledDate
+        );
     }
 
     if (params.status) {
-        conditions.push("appointments.status = ?");
+        conditions.push(
+            "appointments.status = ?"
+        );
+
         values.push(params.status);
     }
 
@@ -223,11 +345,16 @@ export function listAppointmentsForDoctor(params: {
             SELECT
                 appointments.id,
                 appointments.patient_id,
-                patient_users.id AS patient_user_id,
-                patient_users.name AS patient_name,
-                patient_users.email AS patient_email,
-                patient_profiles.phone AS patient_phone,
-                patient_profiles.birth_date AS patient_birth_date,
+                patient_users.id
+                    AS patient_user_id,
+                patient_users.name
+                    AS patient_name,
+                patient_users.email
+                    AS patient_email,
+                patient_profiles.phone
+                    AS patient_phone,
+                patient_profiles.birth_date
+                    AS patient_birth_date,
                 appointments.scheduled_date,
                 appointments.start_time,
                 appointments.end_time,
@@ -238,28 +365,104 @@ export function listAppointmentsForDoctor(params: {
                 appointments.created_at,
                 appointments.updated_at,
                 CASE
-                    WHEN medical_notes.id IS NULL THEN 0
+                    WHEN medical_notes.id
+                        IS NULL
+                        THEN 0
                     ELSE 1
                 END AS has_medical_note
             FROM appointments
             INNER JOIN patient_profiles
                 ON patient_profiles.id =
                     appointments.patient_id
-            INNER JOIN users AS patient_users
+            INNER JOIN users
+                AS patient_users
                 ON patient_users.id =
                     patient_profiles.user_id
             LEFT JOIN medical_notes
                 ON medical_notes.appointment_id =
                     appointments.id
-            WHERE ${conditions.join(" AND ")}
+            WHERE ${conditions.join(
+                " AND "
+            )}
             ORDER BY
-                appointments.scheduled_date ASC,
-                appointments.start_time ASC
+                appointments.scheduled_date
+                    ASC,
+                appointments.start_time
+                    ASC
             `
         )
-        .all(...values) as DoctorAppointmentRow[];
+        .all(
+            ...values
+        ) as DoctorAppointmentRow[];
 
-    return rows.map(mapDoctorAppointmentRow);
+    return rows.map(
+        mapDoctorAppointmentRow
+    );
+}
+
+export function findAppointmentForDoctor(
+    params: {
+        doctorId: string;
+        appointmentId: string;
+    }
+): DoctorAppointmentDTO | null {
+    const row = db
+        .prepare(
+            `
+            SELECT
+                appointments.id,
+                appointments.patient_id,
+                patient_users.id
+                    AS patient_user_id,
+                patient_users.name
+                    AS patient_name,
+                patient_users.email
+                    AS patient_email,
+                patient_profiles.phone
+                    AS patient_phone,
+                patient_profiles.birth_date
+                    AS patient_birth_date,
+                appointments.scheduled_date,
+                appointments.start_time,
+                appointments.end_time,
+                appointments.duration_minutes,
+                appointments.status,
+                appointments.reason,
+                appointments.cancellation_reason,
+                appointments.created_at,
+                appointments.updated_at,
+                CASE
+                    WHEN medical_notes.id
+                        IS NULL
+                        THEN 0
+                    ELSE 1
+                END AS has_medical_note
+            FROM appointments
+            INNER JOIN patient_profiles
+                ON patient_profiles.id =
+                    appointments.patient_id
+            INNER JOIN users
+                AS patient_users
+                ON patient_users.id =
+                    patient_profiles.user_id
+            LEFT JOIN medical_notes
+                ON medical_notes.appointment_id =
+                    appointments.id
+            WHERE appointments.doctor_id = ?
+              AND appointments.id = ?
+            LIMIT 1
+            `
+        )
+        .get(
+            params.doctorId,
+            params.appointmentId
+        ) as
+        | DoctorAppointmentRow
+        | undefined;
+
+    return row
+        ? mapDoctorAppointmentRow(row)
+        : null;
 }
 
 export function listDoctorSchedules(
@@ -283,15 +486,21 @@ export function listDoctorSchedules(
             ORDER BY weekday ASC
             `
         )
-        .all(doctorId) as DoctorScheduleRow[];
+        .all(
+            doctorId
+        ) as DoctorScheduleRow[];
 
-    return rows.map(mapDoctorScheduleRow);
+    return rows.map(
+        mapDoctorScheduleRow
+    );
 }
 
-export function findDoctorSchedule(params: {
-    doctorId: string;
-    weekday: number;
-}): DoctorScheduleDTO | null {
+export function findDoctorSchedule(
+    params: {
+        doctorId: string;
+        weekday: number;
+    }
+): DoctorScheduleDTO | null {
     const row = db
         .prepare(
             `
@@ -314,9 +523,13 @@ export function findDoctorSchedule(params: {
         .get(
             params.doctorId,
             params.weekday
-        ) as DoctorScheduleRow | undefined;
+        ) as
+        | DoctorScheduleRow
+        | undefined;
 
-    return row ? mapDoctorScheduleRow(row) : null;
+    return row
+        ? mapDoctorScheduleRow(row)
+        : null;
 }
 
 export function hasFutureScheduledAppointmentsForWeekday(
@@ -329,25 +542,30 @@ export function hasFutureScheduledAppointmentsForWeekday(
     const row = db
         .prepare(
             `
-            SELECT appointments.id
+            SELECT
+                appointments.id
             FROM appointments
             WHERE appointments.doctor_id = ?
-              AND appointments.status = 'SCHEDULED'
-              AND appointments.scheduled_date >= ?
+              AND appointments.status =
+                    'SCHEDULED'
+              AND appointments.scheduled_date
+                    >= ?
               AND (
                   CASE
                       WHEN CAST(
                           strftime(
                               '%w',
                               appointments.scheduled_date
-                          ) AS INTEGER
+                          )
+                          AS INTEGER
                       ) = 0
                           THEN 7
                       ELSE CAST(
                           strftime(
                               '%w',
                               appointments.scheduled_date
-                          ) AS INTEGER
+                          )
+                          AS INTEGER
                       )
                   END
               ) = ?
@@ -358,7 +576,9 @@ export function hasFutureScheduledAppointmentsForWeekday(
             params.doctorId,
             params.today,
             params.weekday
-        ) as { id: string } | undefined;
+        ) as
+        | { id: string }
+        | undefined;
 
     return Boolean(row);
 }
@@ -375,31 +595,38 @@ export function hasFutureAppointmentsOutsideSchedule(
     const row = db
         .prepare(
             `
-            SELECT appointments.id
+            SELECT
+                appointments.id
             FROM appointments
             WHERE appointments.doctor_id = ?
-              AND appointments.status = 'SCHEDULED'
-              AND appointments.scheduled_date >= ?
+              AND appointments.status =
+                    'SCHEDULED'
+              AND appointments.scheduled_date
+                    >= ?
               AND (
                   CASE
                       WHEN CAST(
                           strftime(
                               '%w',
                               appointments.scheduled_date
-                          ) AS INTEGER
+                          )
+                          AS INTEGER
                       ) = 0
                           THEN 7
                       ELSE CAST(
                           strftime(
                               '%w',
                               appointments.scheduled_date
-                          ) AS INTEGER
+                          )
+                          AS INTEGER
                       )
                   END
               ) = ?
               AND (
-                  appointments.start_time < ?
-                  OR appointments.end_time > ?
+                  appointments.start_time
+                    < ?
+                  OR appointments.end_time
+                    > ?
               )
             LIMIT 1
             `
@@ -410,13 +637,16 @@ export function hasFutureAppointmentsOutsideSchedule(
             params.weekday,
             params.startTime,
             params.endTime
-        ) as { id: string } | undefined;
+        ) as
+        | { id: string }
+        | undefined;
 
     return Boolean(row);
 }
 
 export function upsertDoctorSchedule(
-    params: UpsertDoctorScheduleRepositoryInput
+    params:
+        UpsertDoctorScheduleRepositoryInput
 ): DoctorScheduleDTO {
     const scheduleId = nanoid();
 
@@ -432,14 +662,21 @@ export function upsertDoctorSchedule(
             is_active
         )
         VALUES (?, ?, ?, ?, ?, ?, ?)
-        ON CONFLICT (doctor_id, weekday)
+        ON CONFLICT (
+            doctor_id,
+            weekday
+        )
         DO UPDATE SET
-            start_time = excluded.start_time,
-            end_time = excluded.end_time,
+            start_time =
+                excluded.start_time,
+            end_time =
+                excluded.end_time,
             appointment_duration_minutes =
                 excluded.appointment_duration_minutes,
-            is_active = excluded.is_active,
-            updated_at = CURRENT_TIMESTAMP
+            is_active =
+                excluded.is_active,
+            updated_at =
+                CURRENT_TIMESTAMP
         `
     ).run(
         scheduleId,
@@ -451,10 +688,11 @@ export function upsertDoctorSchedule(
         params.isActive ? 1 : 0
     );
 
-    const schedule = findDoctorSchedule({
-        doctorId: params.doctorId,
-        weekday: params.weekday,
-    });
+    const schedule =
+        findDoctorSchedule({
+            doctorId: params.doctorId,
+            weekday: params.weekday,
+        });
 
     if (!schedule) {
         throw new Error(
@@ -465,10 +703,12 @@ export function upsertDoctorSchedule(
     return schedule;
 }
 
-export function listFutureDoctorBlocks(params: {
-    doctorId: string;
-    fromDateTime: string;
-}): DoctorBlockDTO[] {
+export function listFutureDoctorBlocks(
+    params: {
+        doctorId: string;
+        fromDateTime: string;
+    }
+): DoctorBlockDTO[] {
     const rows = db
         .prepare(
             `
@@ -482,7 +722,8 @@ export function listFutureDoctorBlocks(params: {
             FROM doctor_blocks
             WHERE doctor_id = ?
               AND end_datetime > ?
-            ORDER BY start_datetime ASC
+            ORDER BY
+                start_datetime ASC
             `
         )
         .all(
@@ -490,13 +731,17 @@ export function listFutureDoctorBlocks(params: {
             params.fromDateTime
         ) as DoctorBlockRow[];
 
-    return rows.map(mapDoctorBlockRow);
+    return rows.map(
+        mapDoctorBlockRow
+    );
 }
 
-export function findDoctorBlockById(params: {
-    doctorId: string;
-    blockId: string;
-}): DoctorBlockDTO | null {
+export function findDoctorBlockById(
+    params: {
+        doctorId: string;
+        blockId: string;
+    }
+): DoctorBlockDTO | null {
     const row = db
         .prepare(
             `
@@ -516,16 +761,22 @@ export function findDoctorBlockById(params: {
         .get(
             params.doctorId,
             params.blockId
-        ) as DoctorBlockRow | undefined;
+        ) as
+        | DoctorBlockRow
+        | undefined;
 
-    return row ? mapDoctorBlockRow(row) : null;
+    return row
+        ? mapDoctorBlockRow(row)
+        : null;
 }
 
-export function hasDoctorBlockOverlap(params: {
-    doctorId: string;
-    startDateTime: string;
-    endDateTime: string;
-}): boolean {
+export function hasDoctorBlockOverlap(
+    params: {
+        doctorId: string;
+        startDateTime: string;
+        endDateTime: string;
+    }
+): boolean {
     const row = db
         .prepare(
             `
@@ -541,7 +792,9 @@ export function hasDoctorBlockOverlap(params: {
             params.doctorId,
             params.endDateTime,
             params.startDateTime
-        ) as { id: string } | undefined;
+        ) as
+        | { id: string }
+        | undefined;
 
     return Boolean(row);
 }
@@ -561,10 +814,14 @@ export function listScheduledAppointmentIdsAffectedByBlock(
             WHERE doctor_id = ?
               AND status = 'SCHEDULED'
               AND (
-                  scheduled_date || 'T' || start_time
+                  scheduled_date ||
+                  'T' ||
+                  start_time
               ) < ?
               AND (
-                  scheduled_date || 'T' || end_time
+                  scheduled_date ||
+                  'T' ||
+                  end_time
               ) > ?
             ORDER BY
                 scheduled_date ASC,
@@ -575,13 +832,18 @@ export function listScheduledAppointmentIdsAffectedByBlock(
             params.doctorId,
             params.endDateTime,
             params.startDateTime
-        ) as Array<{ id: string }>;
+        ) as Array<{
+            id: string;
+        }>;
 
-    return rows.map((row) => row.id);
+    return rows.map(
+        (row) => row.id
+    );
 }
 
 export function createDoctorBlock(
-    params: CreateDoctorBlockRepositoryInput
+    params:
+        CreateDoctorBlockRepositoryInput
 ): DoctorBlockDTO {
     const blockId = nanoid();
 
@@ -619,27 +881,37 @@ export function createDoctorBlock(
 }
 
 export function cancelAppointmentsForDoctorBlock(
-    params: CancelAppointmentsForDoctorBlockRepositoryInput
+    params:
+        CancelAppointmentsForDoctorBlockRepositoryInput
 ): number {
-    if (params.appointmentIds.length === 0) {
+    if (
+        params.appointmentIds.length ===
+        0
+    ) {
         return 0;
     }
 
-    const placeholders = params.appointmentIds
-        .map(() => "?")
-        .join(", ");
+    const placeholders =
+        params.appointmentIds
+            .map(() => "?")
+            .join(", ");
 
     const result = db
         .prepare(
             `
             UPDATE appointments
-            SET status = 'CANCELLED',
+            SET
+                status = 'CANCELLED',
                 cancellation_reason = ?,
-                cancelled_at = CURRENT_TIMESTAMP,
+                cancelled_at =
+                    CURRENT_TIMESTAMP,
                 cancelled_by_user_id = ?,
-                updated_at = CURRENT_TIMESTAMP
+                updated_at =
+                    CURRENT_TIMESTAMP
             WHERE status = 'SCHEDULED'
-              AND id IN (${placeholders})
+              AND id IN (
+                  ${placeholders}
+              )
             `
         )
         .run(
@@ -651,10 +923,12 @@ export function cancelAppointmentsForDoctorBlock(
     return result.changes;
 }
 
-export function deleteDoctorBlock(params: {
-    doctorId: string;
-    blockId: string;
-}): boolean {
+export function deleteDoctorBlock(
+    params: {
+        doctorId: string;
+        blockId: string;
+    }
+): boolean {
     const result = db
         .prepare(
             `
@@ -671,14 +945,17 @@ export function deleteDoctorBlock(params: {
     return result.changes > 0;
 }
 
-export function hasDoctorAccessToPatient(params: {
-    doctorId: string;
-    patientId: string;
-}): boolean {
+export function hasDoctorAccessToPatient(
+    params: {
+        doctorId: string;
+        patientId: string;
+    }
+): boolean {
     const row = db
         .prepare(
             `
-            SELECT appointments.id
+            SELECT
+                appointments.id
             FROM appointments
             WHERE appointments.doctor_id = ?
               AND appointments.patient_id = ?
@@ -688,7 +965,9 @@ export function hasDoctorAccessToPatient(params: {
         .get(
             params.doctorId,
             params.patientId
-        ) as { id: string } | undefined;
+        ) as
+        | { id: string }
+        | undefined;
 
     return Boolean(row);
 }
@@ -701,11 +980,16 @@ export function listMedicalRecordsForDoctor(
             `
             SELECT DISTINCT
                 medical_records.id,
-                patient_profiles.id AS patient_id,
-                patient_users.name AS patient_name,
-                patient_users.email AS patient_email,
-                patient_profiles.phone AS patient_phone,
-                patient_profiles.birth_date AS patient_birth_date,
+                patient_profiles.id
+                    AS patient_id,
+                patient_users.name
+                    AS patient_name,
+                patient_users.email
+                    AS patient_email,
+                patient_profiles.phone
+                    AS patient_phone,
+                patient_profiles.birth_date
+                    AS patient_birth_date,
                 medical_records.allergies,
                 medical_records.chronic_diseases,
                 medical_records.current_medications,
@@ -717,7 +1001,8 @@ export function listMedicalRecordsForDoctor(
             INNER JOIN patient_profiles
                 ON patient_profiles.id =
                     appointments.patient_id
-            INNER JOIN users AS patient_users
+            INNER JOIN users
+                AS patient_users
                 ON patient_users.id =
                     patient_profiles.user_id
             LEFT JOIN medical_records
@@ -725,28 +1010,40 @@ export function listMedicalRecordsForDoctor(
                     patient_profiles.id
             WHERE appointments.doctor_id = ?
             ORDER BY
-                patient_users.name COLLATE NOCASE ASC
+                patient_users.name
+                    COLLATE NOCASE ASC
             `
         )
-        .all(doctorId) as MedicalRecordRow[];
+        .all(
+            doctorId
+        ) as MedicalRecordRow[];
 
-    return rows.map(mapMedicalRecordRow);
+    return rows.map(
+        mapMedicalRecordRow
+    );
 }
 
-export function findMedicalRecordForDoctor(params: {
-    doctorId: string;
-    patientId: string;
-}): MedicalRecordDTO | null {
+export function findMedicalRecordForDoctor(
+    params: {
+        doctorId: string;
+        patientId: string;
+    }
+): MedicalRecordDTO | null {
     const row = db
         .prepare(
             `
             SELECT
                 medical_records.id,
-                patient_profiles.id AS patient_id,
-                patient_users.name AS patient_name,
-                patient_users.email AS patient_email,
-                patient_profiles.phone AS patient_phone,
-                patient_profiles.birth_date AS patient_birth_date,
+                patient_profiles.id
+                    AS patient_id,
+                patient_users.name
+                    AS patient_name,
+                patient_users.email
+                    AS patient_email,
+                patient_profiles.phone
+                    AS patient_phone,
+                patient_profiles.birth_date
+                    AS patient_birth_date,
                 medical_records.allergies,
                 medical_records.chronic_diseases,
                 medical_records.current_medications,
@@ -755,7 +1052,8 @@ export function findMedicalRecordForDoctor(params: {
                 medical_records.created_at,
                 medical_records.updated_at
             FROM patient_profiles
-            INNER JOIN users AS patient_users
+            INNER JOIN users
+                AS patient_users
                 ON patient_users.id =
                     patient_profiles.user_id
             INNER JOIN appointments
@@ -772,13 +1070,18 @@ export function findMedicalRecordForDoctor(params: {
         .get(
             params.doctorId,
             params.patientId
-        ) as MedicalRecordRow | undefined;
+        ) as
+        | MedicalRecordRow
+        | undefined;
 
-    return row ? mapMedicalRecordRow(row) : null;
+    return row
+        ? mapMedicalRecordRow(row)
+        : null;
 }
 
 export function upsertMedicalRecord(
-    params: UpsertMedicalRecordRepositoryInput
+    params:
+        UpsertMedicalRecordRepositoryInput
 ): void {
     const recordId = nanoid();
 
@@ -796,7 +1099,8 @@ export function upsertMedicalRecord(
         VALUES (?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT (patient_id)
         DO UPDATE SET
-            allergies = excluded.allergies,
+            allergies =
+                excluded.allergies,
             chronic_diseases =
                 excluded.chronic_diseases,
             current_medications =
@@ -805,15 +1109,117 @@ export function upsertMedicalRecord(
                 excluded.emergency_contact_name,
             emergency_contact_phone =
                 excluded.emergency_contact_phone,
-            updated_at = CURRENT_TIMESTAMP
+            updated_at =
+                CURRENT_TIMESTAMP
         `
     ).run(
         recordId,
         params.patientId,
         params.allergies || null,
         params.chronicDiseases || null,
-        params.currentMedications || null,
-        params.emergencyContactName || null,
-        params.emergencyContactPhone || null
+        params.currentMedications ||
+        null,
+        params.emergencyContactName ||
+        null,
+        params.emergencyContactPhone ||
+        null
     );
+}
+
+export function listMedicalNotesForDoctor(
+    doctorId: string
+): MedicalNoteDTO[] {
+    const rows = db
+        .prepare(
+            `
+            ${medicalNoteSelect}
+            WHERE medical_notes.doctor_id = ?
+            ORDER BY
+                appointments.scheduled_date
+                    DESC,
+                appointments.start_time
+                    DESC
+            `
+        )
+        .all(
+            doctorId
+        ) as MedicalNoteRow[];
+
+    return rows.map(
+        mapMedicalNoteRow
+    );
+}
+
+export function findMedicalNoteByAppointment(
+    params: {
+        doctorId: string;
+        appointmentId: string;
+    }
+): MedicalNoteDTO | null {
+    const row = db
+        .prepare(
+            `
+            ${medicalNoteSelect}
+            WHERE medical_notes.doctor_id = ?
+              AND medical_notes.appointment_id = ?
+            LIMIT 1
+            `
+        )
+        .get(
+            params.doctorId,
+            params.appointmentId
+        ) as
+        | MedicalNoteRow
+        | undefined;
+
+    return row
+        ? mapMedicalNoteRow(row)
+        : null;
+}
+
+export function createMedicalNote(
+    params:
+        CreateMedicalNoteRepositoryInput
+): MedicalNoteDTO {
+    const noteId = nanoid();
+
+    db.prepare(
+        `
+        INSERT INTO medical_notes (
+            id,
+            appointment_id,
+            doctor_id,
+            reason,
+            diagnosis,
+            treatment,
+            prescription_text,
+            instructions_text
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        `
+    ).run(
+        noteId,
+        params.appointmentId,
+        params.doctorId,
+        params.reason,
+        params.diagnosis,
+        params.treatment || null,
+        params.prescriptionText || null,
+        params.instructionsText || null
+    );
+
+    const note =
+        findMedicalNoteByAppointment({
+            doctorId: params.doctorId,
+            appointmentId:
+                params.appointmentId,
+        });
+
+    if (!note) {
+        throw new Error(
+            "No se pudo crear la nota médica."
+        );
+    }
+
+    return note;
 }

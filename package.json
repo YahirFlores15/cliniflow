@@ -9,7 +9,8 @@
     "lint": "eslint",
     "db:schema": "sqlite3 db/cliniflow.sqlite < db/schema.sql",
     "seed:superuser": "node scripts/seed-superuser.cjs",
-    "seed:auth-users": "node scripts/seed-auth-users.cjs"
+    "seed:auth-users": "node scripts/seed-auth-users.cjs",
+    "seed:staff-test-data": "node scripts/seed-staff-test-data.cjs"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

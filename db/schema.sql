@@ -48,12 +48,61 @@ CREATE TABLE IF NOT EXISTS patient_profiles (
   user_id TEXT NOT NULL UNIQUE,
   phone TEXT,
   birth_date TEXT,
-  sex TEXT,
+  sex TEXT CHECK (sex IS NULL OR sex IN ('MALE', 'FEMALE', 'OTHER', 'UNSPECIFIED')),
   address TEXT,
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS doctor_schedules (
+  id TEXT PRIMARY KEY,
+  doctor_id TEXT NOT NULL,
+  weekday INTEGER NOT NULL CHECK (weekday BETWEEN 1 AND 7),
+  start_time TEXT NOT NULL,
+  end_time TEXT NOT NULL,
+  appointment_duration_minutes INTEGER NOT NULL DEFAULT 30 CHECK (appointment_duration_minutes IN (30, 60)),
+  is_active INTEGER NOT NULL DEFAULT 1,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+  FOREIGN KEY (doctor_id) REFERENCES doctor_profiles(id) ON DELETE CASCADE,
+  UNIQUE (doctor_id, weekday)
+);
+
+CREATE TABLE IF NOT EXISTS doctor_blocks (
+  id TEXT PRIMARY KEY,
+  doctor_id TEXT NOT NULL,
+  start_datetime TEXT NOT NULL,
+  end_datetime TEXT NOT NULL,
+  reason TEXT,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+  FOREIGN KEY (doctor_id) REFERENCES doctor_profiles(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS appointments (
+  id TEXT PRIMARY KEY,
+  patient_id TEXT NOT NULL,
+  doctor_id TEXT NOT NULL,
+  scheduled_date TEXT NOT NULL,
+  start_time TEXT NOT NULL,
+  end_time TEXT NOT NULL,
+  duration_minutes INTEGER NOT NULL CHECK (duration_minutes IN (30, 60)),
+  status TEXT NOT NULL DEFAULT 'SCHEDULED' CHECK (status IN ('SCHEDULED', 'CANCELLED', 'COMPLETED')),
+  reason TEXT,
+  cancellation_reason TEXT,
+  cancelled_at TEXT,
+  cancelled_by_user_id TEXT,
+  created_by_user_id TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+  FOREIGN KEY (patient_id) REFERENCES patient_profiles(id) ON DELETE RESTRICT,
+  FOREIGN KEY (doctor_id) REFERENCES doctor_profiles(id) ON DELETE RESTRICT,
+  FOREIGN KEY (cancelled_by_user_id) REFERENCES users(id) ON DELETE SET NULL,
+  FOREIGN KEY (created_by_user_id) REFERENCES users(id) ON DELETE RESTRICT
 );
 
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
@@ -66,3 +115,16 @@ CREATE INDEX IF NOT EXISTS idx_sessions_expires_at ON sessions(expires_at);
 CREATE INDEX IF NOT EXISTS idx_doctor_profiles_user_id ON doctor_profiles(user_id);
 CREATE INDEX IF NOT EXISTS idx_staff_profiles_user_id ON staff_profiles(user_id);
 CREATE INDEX IF NOT EXISTS idx_patient_profiles_user_id ON patient_profiles(user_id);
+
+CREATE INDEX IF NOT EXISTS idx_doctor_schedules_doctor_id ON doctor_schedules(doctor_id);
+CREATE INDEX IF NOT EXISTS idx_doctor_schedules_weekday ON doctor_schedules(weekday);
+
+CREATE INDEX IF NOT EXISTS idx_doctor_blocks_doctor_id ON doctor_blocks(doctor_id);
+CREATE INDEX IF NOT EXISTS idx_doctor_blocks_start_datetime ON doctor_blocks(start_datetime);
+CREATE INDEX IF NOT EXISTS idx_doctor_blocks_end_datetime ON doctor_blocks(end_datetime);
+
+CREATE INDEX IF NOT EXISTS idx_appointments_patient_id ON appointments(patient_id);
+CREATE INDEX IF NOT EXISTS idx_appointments_doctor_id ON appointments(doctor_id);
+CREATE INDEX IF NOT EXISTS idx_appointments_scheduled_date ON appointments(scheduled_date);
+CREATE INDEX IF NOT EXISTS idx_appointments_status ON appointments(status);
+CREATE INDEX IF NOT EXISTS idx_appointments_doctor_date_time ON appointments(doctor_id, scheduled_date, start_time, end_time);

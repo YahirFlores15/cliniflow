@@ -1,4 +1,4 @@
-import type { CancelAppointmentsForDoctorBlockRepositoryInput, CreateDoctorBlockRepositoryInput, DoctorAppointmentDTO, DoctorBlockDTO, DoctorProfileDTO, DoctorScheduleDTO, UpsertDoctorScheduleRepositoryInput, } from "@/shared/dtos/doctor.dtos";
+import type { CancelAppointmentsForDoctorBlockRepositoryInput, CreateDoctorBlockRepositoryInput, DoctorAppointmentDTO, DoctorBlockDTO, DoctorProfileDTO, DoctorScheduleDTO, MedicalRecordDTO, UpsertDoctorScheduleRepositoryInput, UpsertMedicalRecordRepositoryInput, } from "@/shared/dtos/doctor.dtos";
 import type { DoctorAppointmentStatus, } from "@/shared/schemas/doctor.schemas";
 import { getDb } from "@/server/db/connection";
 import { nanoid } from "nanoid";
@@ -56,6 +56,22 @@ type DoctorBlockRow = {
     end_datetime: string;
     reason: string | null;
     created_at: string;
+};
+
+type MedicalRecordRow = {
+    id: string | null;
+    patient_id: string;
+    patient_name: string;
+    patient_email: string;
+    patient_phone: string | null;
+    patient_birth_date: string | null;
+    allergies: string | null;
+    chronic_diseases: string | null;
+    current_medications: string | null;
+    emergency_contact_name: string | null;
+    emergency_contact_phone: string | null;
+    created_at: string | null;
+    updated_at: string | null;
 };
 
 function mapDoctorProfileRow(
@@ -125,6 +141,28 @@ function mapDoctorBlockRow(
         endDateTime: row.end_datetime,
         reason: row.reason,
         createdAt: row.created_at,
+    };
+}
+
+function mapMedicalRecordRow(
+    row: MedicalRecordRow
+): MedicalRecordDTO {
+    return {
+        id: row.id,
+        patientId: row.patient_id,
+        patientName: row.patient_name,
+        patientEmail: row.patient_email,
+        patientPhone: row.patient_phone,
+        patientBirthDate: row.patient_birth_date,
+        allergies: row.allergies,
+        chronicDiseases: row.chronic_diseases,
+        currentMedications: row.current_medications,
+        emergencyContactName:
+            row.emergency_contact_name,
+        emergencyContactPhone:
+            row.emergency_contact_phone,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
     };
 }
 
@@ -631,4 +669,151 @@ export function deleteDoctorBlock(params: {
         );
 
     return result.changes > 0;
+}
+
+export function hasDoctorAccessToPatient(params: {
+    doctorId: string;
+    patientId: string;
+}): boolean {
+    const row = db
+        .prepare(
+            `
+            SELECT appointments.id
+            FROM appointments
+            WHERE appointments.doctor_id = ?
+              AND appointments.patient_id = ?
+            LIMIT 1
+            `
+        )
+        .get(
+            params.doctorId,
+            params.patientId
+        ) as { id: string } | undefined;
+
+    return Boolean(row);
+}
+
+export function listMedicalRecordsForDoctor(
+    doctorId: string
+): MedicalRecordDTO[] {
+    const rows = db
+        .prepare(
+            `
+            SELECT DISTINCT
+                medical_records.id,
+                patient_profiles.id AS patient_id,
+                patient_users.name AS patient_name,
+                patient_users.email AS patient_email,
+                patient_profiles.phone AS patient_phone,
+                patient_profiles.birth_date AS patient_birth_date,
+                medical_records.allergies,
+                medical_records.chronic_diseases,
+                medical_records.current_medications,
+                medical_records.emergency_contact_name,
+                medical_records.emergency_contact_phone,
+                medical_records.created_at,
+                medical_records.updated_at
+            FROM appointments
+            INNER JOIN patient_profiles
+                ON patient_profiles.id =
+                    appointments.patient_id
+            INNER JOIN users AS patient_users
+                ON patient_users.id =
+                    patient_profiles.user_id
+            LEFT JOIN medical_records
+                ON medical_records.patient_id =
+                    patient_profiles.id
+            WHERE appointments.doctor_id = ?
+            ORDER BY
+                patient_users.name COLLATE NOCASE ASC
+            `
+        )
+        .all(doctorId) as MedicalRecordRow[];
+
+    return rows.map(mapMedicalRecordRow);
+}
+
+export function findMedicalRecordForDoctor(params: {
+    doctorId: string;
+    patientId: string;
+}): MedicalRecordDTO | null {
+    const row = db
+        .prepare(
+            `
+            SELECT
+                medical_records.id,
+                patient_profiles.id AS patient_id,
+                patient_users.name AS patient_name,
+                patient_users.email AS patient_email,
+                patient_profiles.phone AS patient_phone,
+                patient_profiles.birth_date AS patient_birth_date,
+                medical_records.allergies,
+                medical_records.chronic_diseases,
+                medical_records.current_medications,
+                medical_records.emergency_contact_name,
+                medical_records.emergency_contact_phone,
+                medical_records.created_at,
+                medical_records.updated_at
+            FROM patient_profiles
+            INNER JOIN users AS patient_users
+                ON patient_users.id =
+                    patient_profiles.user_id
+            INNER JOIN appointments
+                ON appointments.patient_id =
+                    patient_profiles.id
+               AND appointments.doctor_id = ?
+            LEFT JOIN medical_records
+                ON medical_records.patient_id =
+                    patient_profiles.id
+            WHERE patient_profiles.id = ?
+            LIMIT 1
+            `
+        )
+        .get(
+            params.doctorId,
+            params.patientId
+        ) as MedicalRecordRow | undefined;
+
+    return row ? mapMedicalRecordRow(row) : null;
+}
+
+export function upsertMedicalRecord(
+    params: UpsertMedicalRecordRepositoryInput
+): void {
+    const recordId = nanoid();
+
+    db.prepare(
+        `
+        INSERT INTO medical_records (
+            id,
+            patient_id,
+            allergies,
+            chronic_diseases,
+            current_medications,
+            emergency_contact_name,
+            emergency_contact_phone
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT (patient_id)
+        DO UPDATE SET
+            allergies = excluded.allergies,
+            chronic_diseases =
+                excluded.chronic_diseases,
+            current_medications =
+                excluded.current_medications,
+            emergency_contact_name =
+                excluded.emergency_contact_name,
+            emergency_contact_phone =
+                excluded.emergency_contact_phone,
+            updated_at = CURRENT_TIMESTAMP
+        `
+    ).run(
+        recordId,
+        params.patientId,
+        params.allergies || null,
+        params.chronicDiseases || null,
+        params.currentMedications || null,
+        params.emergencyContactName || null,
+        params.emergencyContactPhone || null
+    );
 }

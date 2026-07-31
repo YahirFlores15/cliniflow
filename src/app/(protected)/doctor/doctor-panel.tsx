@@ -1,13 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import {
+    useActionState,
+    useMemo,
+    useState,
+} from "react";
 import {
     Ban,
     CalendarDays,
     CheckCircle2,
     CircleX,
     Clock3,
+    FileHeart,
     FileText,
     Save,
     Stethoscope,
@@ -15,6 +20,7 @@ import {
     UserRound,
 } from "lucide-react";
 
+import MedicalRecordPanel from "@/app/(protected)/doctor/medical-record-panel";
 import {
     createDoctorBlockAction,
     deleteDoctorBlockAction,
@@ -189,12 +195,33 @@ function formatPatientAge(
 
 function AppointmentCard({
     appointment,
+    onOpenMedicalRecord,
 }: {
     appointment: DoctorAppointmentDTO;
+    onOpenMedicalRecord: (
+        patientId: string
+    ) => void;
 }) {
     const patientAge = formatPatientAge(
         appointment.patientBirthDate
     );
+
+    function handleOpenMedicalRecord() {
+        onOpenMedicalRecord(
+            appointment.patientId
+        );
+
+        window.setTimeout(() => {
+            document
+                .getElementById(
+                    "medical-record"
+                )
+                ?.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start",
+                });
+        }, 0);
+    }
 
     return (
         <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -319,6 +346,20 @@ function AppointmentCard({
                         </p>
                     </div>
                 ) : null}
+
+                <div className="mt-4 flex justify-end">
+                    <button
+                        type="button"
+                        onClick={
+                            handleOpenMedicalRecord
+                        }
+                        className="inline-flex items-center gap-2 rounded-xl border border-violet-200 bg-violet-50 px-4 py-2 text-sm font-semibold text-violet-800 transition hover:bg-violet-100"
+                    >
+                        <FileHeart className="h-4 w-4" />
+
+                        Abrir expediente
+                    </button>
+                </div>
             </div>
         </article>
     );
@@ -725,6 +766,24 @@ export default function DoctorPanel({
     agenda,
     filters,
 }: DoctorPanelProps) {
+    const [
+        selectedPatientId,
+        setSelectedPatientId,
+    ] = useState<string | null>(null);
+
+    const selectedMedicalRecord = useMemo(
+        () =>
+            agenda.medicalRecords.find(
+                (record) =>
+                    record.patientId ===
+                    selectedPatientId
+            ) ?? null,
+        [
+            agenda.medicalRecords,
+            selectedPatientId,
+        ]
+    );
+
     return (
         <div>
             <div>
@@ -943,12 +1002,42 @@ export default function DoctorPanel({
                                     appointment={
                                         appointment
                                     }
+                                    onOpenMedicalRecord={
+                                        setSelectedPatientId
+                                    }
                                 />
                             )
                         )}
                     </div>
                 )}
             </section>
+
+            {selectedMedicalRecord ? (
+                <MedicalRecordPanel
+                    key={
+                        selectedMedicalRecord.patientId
+                    }
+                    record={selectedMedicalRecord}
+                />
+            ) : (
+                <section className="mt-10 border-t border-slate-200 pt-10">
+                    <div className="rounded-2xl border border-dashed border-violet-300 bg-violet-50 px-6 py-10 text-center">
+                        <FileHeart className="mx-auto h-8 w-8 text-violet-500" />
+
+                        <h2 className="mt-4 font-semibold text-violet-950">
+                            Selecciona un expediente
+                        </h2>
+
+                        <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-violet-800">
+                            Utiliza el botón “Abrir
+                            expediente” desde una cita para
+                            consultar o actualizar la
+                            información clínica permanente
+                            del paciente.
+                        </p>
+                    </div>
+                </section>
+            )}
 
             <section className="mt-10 border-t border-slate-200 pt-10">
                 <div>

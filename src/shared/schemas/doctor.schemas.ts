@@ -107,6 +107,58 @@ export const DeleteDoctorBlockSchema = z.object({
         .min(1, "El bloqueo es obligatorio."),
 });
 
+export const UpdateMedicalRecordSchema = z.object({
+    patientId: z
+        .string()
+        .trim()
+        .min(1, "El paciente es obligatorio."),
+    allergies: z
+        .string()
+        .trim()
+        .max(
+            2000,
+            "Las alergias no pueden superar los 2000 caracteres."
+        )
+        .optional()
+        .default(""),
+    chronicDiseases: z
+        .string()
+        .trim()
+        .max(
+            2000,
+            "Las enfermedades crónicas no pueden superar los 2000 caracteres."
+        )
+        .optional()
+        .default(""),
+    currentMedications: z
+        .string()
+        .trim()
+        .max(
+            2000,
+            "Los medicamentos actuales no pueden superar los 2000 caracteres."
+        )
+        .optional()
+        .default(""),
+    emergencyContactName: z
+        .string()
+        .trim()
+        .max(
+            120,
+            "El nombre del contacto no puede superar los 120 caracteres."
+        )
+        .optional()
+        .default(""),
+    emergencyContactPhone: z
+        .string()
+        .trim()
+        .max(
+            30,
+            "El teléfono del contacto no puede superar los 30 caracteres."
+        )
+        .optional()
+        .default(""),
+});
+
 export type DoctorAppointmentStatus = z.infer<
     typeof DoctorAppointmentStatusSchema
 >;
@@ -125,4 +177,8 @@ export type CreateDoctorBlockInput = z.infer<
 
 export type DeleteDoctorBlockInput = z.infer<
     typeof DeleteDoctorBlockSchema
+>;
+
+export type UpdateMedicalRecordInput = z.infer<
+    typeof UpdateMedicalRecordSchema
 >;

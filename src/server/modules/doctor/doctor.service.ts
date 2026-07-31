@@ -1,6 +1,6 @@
-import { cancelAppointmentsForDoctorBlock, createDoctorBlock, deleteDoctorBlock, findDoctorBlockById, findDoctorProfileByUserId, hasDoctorBlockOverlap, hasFutureAppointmentsOutsideSchedule, hasFutureScheduledAppointmentsForWeekday, listAppointmentsForDoctor, listDoctorSchedules, listFutureDoctorBlocks, listScheduledAppointmentIdsAffectedByBlock, upsertDoctorSchedule, } from "@/server/modules/doctor/doctor.repository";
-import type { DoctorAgendaDTO, DoctorAgendaSummaryDTO, DoctorAppointmentDTO, DoctorBlockDTO, DoctorProfileDTO, DoctorScheduleDTO, } from "@/shared/dtos/doctor.dtos";
-import type { CreateDoctorBlockInput, DeleteDoctorBlockInput, DoctorAgendaFilterInput, UpsertDoctorScheduleInput, } from "@/shared/schemas/doctor.schemas";
+import { cancelAppointmentsForDoctorBlock, createDoctorBlock, deleteDoctorBlock, findDoctorBlockById, findDoctorProfileByUserId, findMedicalRecordForDoctor, hasDoctorAccessToPatient, hasDoctorBlockOverlap, hasFutureAppointmentsOutsideSchedule, hasFutureScheduledAppointmentsForWeekday, listAppointmentsForDoctor, listDoctorSchedules, listFutureDoctorBlocks, listMedicalRecordsForDoctor, listScheduledAppointmentIdsAffectedByBlock, upsertDoctorSchedule, upsertMedicalRecord, } from "@/server/modules/doctor/doctor.repository";
+import type { DoctorAgendaDTO, DoctorAgendaSummaryDTO, DoctorAppointmentDTO, DoctorBlockDTO, DoctorProfileDTO, DoctorScheduleDTO, MedicalRecordDTO, } from "@/shared/dtos/doctor.dtos";
+import type { CreateDoctorBlockInput, DeleteDoctorBlockInput, DoctorAgendaFilterInput, UpdateMedicalRecordInput, UpsertDoctorScheduleInput, } from "@/shared/schemas/doctor.schemas";
 import { getDb } from "@/server/db/connection";
 
 
@@ -268,6 +268,11 @@ export function getDoctorAgenda(params: {
         fromDateTime: getLocalDateTime(),
     });
 
+    const medicalRecords =
+        listMedicalRecordsForDoctor(
+            doctor.id
+        );
+
     const summary = buildAgendaSummary({
         appointments: allAppointments,
         today: getLocalCalendarDate(),
@@ -278,6 +283,7 @@ export function getDoctorAgenda(params: {
         appointments,
         schedules,
         blocks,
+        medicalRecords,
         summary,
     };
 }
@@ -504,4 +510,66 @@ export function deleteBlockForDoctor(params: {
             "No se pudo eliminar el bloqueo."
         );
     }
+}
+
+export function saveMedicalRecordForDoctor(
+    params: {
+        userId: string;
+        input: UpdateMedicalRecordInput;
+    }
+): MedicalRecordDTO {
+    const doctor = getDoctorProfileOrThrow(
+        params.userId
+    );
+
+    const hasAccess =
+        hasDoctorAccessToPatient({
+            doctorId: doctor.id,
+            patientId:
+                params.input.patientId,
+        });
+
+    if (!hasAccess) {
+        throw new DoctorDomainError(
+            "No tienes acceso al expediente de este paciente."
+        );
+    }
+
+    const database = getDb();
+
+    const transaction = database.transaction(
+        () => {
+            upsertMedicalRecord({
+                patientId:
+                    params.input.patientId,
+                allergies:
+                    params.input.allergies.trim(),
+                chronicDiseases:
+                    params.input.chronicDiseases.trim(),
+                currentMedications:
+                    params.input.currentMedications.trim(),
+                emergencyContactName:
+                    params.input.emergencyContactName.trim(),
+                emergencyContactPhone:
+                    params.input.emergencyContactPhone.trim(),
+            });
+
+            const record =
+                findMedicalRecordForDoctor({
+                    doctorId: doctor.id,
+                    patientId:
+                        params.input.patientId,
+                });
+
+            if (!record) {
+                throw new DoctorDomainError(
+                    "No se pudo consultar el expediente actualizado."
+                );
+            }
+
+            return record;
+        }
+    );
+
+    return transaction();
 }

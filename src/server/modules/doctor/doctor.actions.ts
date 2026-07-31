@@ -8,11 +8,13 @@ import {
     deleteBlockForDoctor,
     DoctorDomainError,
     saveDoctorSchedule,
+    saveMedicalRecordForDoctor,
 } from "@/server/modules/doctor/doctor.service";
 import { ROLES } from "@/shared/constants/roles";
 import {
     CreateDoctorBlockSchema,
     DeleteDoctorBlockSchema,
+    UpdateMedicalRecordSchema,
     UpsertDoctorScheduleSchema,
 } from "@/shared/schemas/doctor.schemas";
 
@@ -209,6 +211,72 @@ export async function deleteDoctorBlockAction(
             ok: true,
             message:
                 "Bloqueo eliminado correctamente. Las citas canceladas previamente no fueron reactivadas.",
+        };
+    } catch (error) {
+        return getActionErrorState(error);
+    }
+}
+
+export async function saveMedicalRecordAction(
+    _previousState: DoctorActionState,
+    formData: FormData
+): Promise<DoctorActionState> {
+    const session = await requireRole([
+        ROLES.DOCTOR,
+    ]);
+
+    const rawData = {
+        patientId: String(
+            formData.get("patientId") ?? ""
+        ),
+        allergies: String(
+            formData.get("allergies") ?? ""
+        ),
+        chronicDiseases: String(
+            formData.get("chronicDiseases") ?? ""
+        ),
+        currentMedications: String(
+            formData.get("currentMedications") ?? ""
+        ),
+        emergencyContactName: String(
+            formData.get(
+                "emergencyContactName"
+            ) ?? ""
+        ),
+        emergencyContactPhone: String(
+            formData.get(
+                "emergencyContactPhone"
+            ) ?? ""
+        ),
+    };
+
+    const parsed =
+        UpdateMedicalRecordSchema.safeParse(
+            rawData
+        );
+
+    if (!parsed.success) {
+        return {
+            ok: false,
+            message:
+                parsed.error.issues[0]?.message ??
+                "Los datos del expediente no son válidos.",
+        };
+    }
+
+    try {
+        saveMedicalRecordForDoctor({
+            userId: session.user.id,
+            input: parsed.data,
+        });
+
+        revalidatePath("/doctor");
+        revalidatePath("/patient");
+
+        return {
+            ok: true,
+            message:
+                "Expediente clínico guardado correctamente.",
         };
     } catch (error) {
         return getActionErrorState(error);

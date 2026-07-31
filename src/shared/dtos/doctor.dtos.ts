@@ -53,6 +53,22 @@ export type DoctorBlockDTO = {
     createdAt: string;
 };
 
+export type MedicalRecordDTO = {
+    id: string | null;
+    patientId: string;
+    patientName: string;
+    patientEmail: string;
+    patientPhone: string | null;
+    patientBirthDate: string | null;
+    allergies: string | null;
+    chronicDiseases: string | null;
+    currentMedications: string | null;
+    emergencyContactName: string | null;
+    emergencyContactPhone: string | null;
+    createdAt: string | null;
+    updatedAt: string | null;
+};
+
 export type DoctorAgendaSummaryDTO = {
     todayScheduled: number;
     upcomingScheduled: number;
@@ -65,6 +81,7 @@ export type DoctorAgendaDTO = {
     appointments: DoctorAppointmentDTO[];
     schedules: DoctorScheduleDTO[];
     blocks: DoctorBlockDTO[];
+    medicalRecords: MedicalRecordDTO[];
     summary: DoctorAgendaSummaryDTO;
 };
 
@@ -88,4 +105,13 @@ export type CancelAppointmentsForDoctorBlockRepositoryInput = {
     appointmentIds: string[];
     cancelledByUserId: string;
     cancellationReason: string;
+};
+
+export type UpsertMedicalRecordRepositoryInput = {
+    patientId: string;
+    allergies: string;
+    chronicDiseases: string;
+    currentMedications: string;
+    emergencyContactName: string;
+    emergencyContactPhone: string;
 };

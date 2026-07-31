@@ -1,6 +1,14 @@
 import { z } from "zod";
 
 
+const TimeSchema = z
+    .string()
+    .trim()
+    .regex(
+        /^([01]\d|2[0-3]):[0-5]\d$/,
+        "La hora debe tener el formato HH:mm."
+    );
+
 const OptionalDateSchema = z.preprocess(
     (value) => {
         if (typeof value !== "string") {
@@ -53,10 +61,35 @@ export const DoctorAgendaFilterSchema = z.object({
     status: OptionalAppointmentStatusSchema,
 });
 
+export const UpsertDoctorScheduleSchema = z.object({
+    weekday: z.coerce
+        .number()
+        .int()
+        .min(1, "El día de la semana no es válido.")
+        .max(7, "El día de la semana no es válido."),
+    startTime: TimeSchema,
+    endTime: TimeSchema,
+    appointmentDurationMinutes: z.coerce
+        .number()
+        .int()
+        .refine(
+            (value) => value === 30 || value === 60,
+            {
+                message:
+                    "La duración debe ser de 30 o 60 minutos.",
+            }
+        ),
+    isActive: z.boolean(),
+});
+
 export type DoctorAppointmentStatus = z.infer<
     typeof DoctorAppointmentStatusSchema
 >;
 
 export type DoctorAgendaFilterInput = z.infer<
     typeof DoctorAgendaFilterSchema
+>;
+
+export type UpsertDoctorScheduleInput = z.infer<
+    typeof UpsertDoctorScheduleSchema
 >;

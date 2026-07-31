@@ -1,12 +1,76 @@
-import { CalendarDays, CheckCircle2, CircleX, Clock3, FileText, Stethoscope, UserRound, } from "lucide-react";
-import type { DoctorAgendaFilterInput, DoctorAppointmentStatus, } from "@/shared/schemas/doctor.schemas";
-import type { DoctorAgendaDTO, DoctorAppointmentDTO, } from "@/shared/dtos/doctor.dtos";
-import Link from "next/link";
+"use client";
 
+import Link from "next/link";
+import { useActionState } from "react";
+import {
+    CalendarDays,
+    CheckCircle2,
+    CircleX,
+    Clock3,
+    FileText,
+    Save,
+    Stethoscope,
+    UserRound,
+} from "lucide-react";
+
+import {
+    saveDoctorScheduleAction,
+    type DoctorActionState,
+} from "@/server/modules/doctor/doctor.actions";
+import type {
+    DoctorAgendaDTO,
+    DoctorAppointmentDTO,
+    DoctorScheduleDTO,
+} from "@/shared/dtos/doctor.dtos";
+import type {
+    DoctorAgendaFilterInput,
+    DoctorAppointmentStatus,
+} from "@/shared/schemas/doctor.schemas";
 
 type DoctorPanelProps = {
     agenda: DoctorAgendaDTO;
     filters: DoctorAgendaFilterInput;
+};
+
+type WeekdayConfiguration = {
+    value: number;
+    label: string;
+};
+
+const weekdays: WeekdayConfiguration[] = [
+    {
+        value: 1,
+        label: "Lunes",
+    },
+    {
+        value: 2,
+        label: "Martes",
+    },
+    {
+        value: 3,
+        label: "Miércoles",
+    },
+    {
+        value: 4,
+        label: "Jueves",
+    },
+    {
+        value: 5,
+        label: "Viernes",
+    },
+    {
+        value: 6,
+        label: "Sábado",
+    },
+    {
+        value: 7,
+        label: "Domingo",
+    },
+];
+
+const initialActionState: DoctorActionState = {
+    ok: false,
+    message: "",
 };
 
 const statusLabels: Record<
@@ -163,6 +227,7 @@ function AppointmentCard({
                 <div className="shrink-0 rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-700">
                     <div className="flex items-center gap-2 font-medium">
                         <CalendarDays className="h-4 w-4" />
+
                         <span className="capitalize">
                             {formatCalendarDate(
                                 appointment.scheduledDate
@@ -172,6 +237,7 @@ function AppointmentCard({
 
                     <div className="mt-2 flex items-center gap-2">
                         <Clock3 className="h-4 w-4" />
+
                         <span>
                             {appointment.startTime} a{" "}
                             {appointment.endTime}
@@ -218,6 +284,145 @@ function AppointmentCard({
                 ) : null}
             </div>
         </article>
+    );
+}
+
+function ScheduleDayForm({
+    weekday,
+    schedule,
+}: {
+    weekday: WeekdayConfiguration;
+    schedule: DoctorScheduleDTO | null;
+}) {
+    const [state, formAction, pending] =
+        useActionState(
+            saveDoctorScheduleAction,
+            initialActionState
+        );
+
+    return (
+        <form
+            action={formAction}
+            className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+        >
+            <input
+                type="hidden"
+                name="weekday"
+                value={weekday.value}
+            />
+
+            <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                    <h3 className="font-semibold text-slate-950">
+                        {weekday.label}
+                    </h3>
+
+                    <p className="mt-1 text-sm text-slate-500">
+                        Configura la disponibilidad de este
+                        día.
+                    </p>
+                </div>
+
+                <label className="inline-flex items-center gap-2 text-sm font-medium text-slate-700">
+                    <input
+                        type="checkbox"
+                        name="isActive"
+                        defaultChecked={
+                            schedule?.isActive ?? false
+                        }
+                        className="h-4 w-4 rounded border-slate-300 text-cyan-700 focus:ring-cyan-500"
+                    />
+
+                    Día activo
+                </label>
+            </div>
+
+            <div className="mt-5 grid gap-4 sm:grid-cols-3">
+                <label className="block">
+                    <span className="text-sm font-medium text-slate-700">
+                        Inicio
+                    </span>
+
+                    <input
+                        type="time"
+                        name="startTime"
+                        required
+                        defaultValue={
+                            schedule?.startTime ??
+                            "08:00"
+                        }
+                        className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-950 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100"
+                    />
+                </label>
+
+                <label className="block">
+                    <span className="text-sm font-medium text-slate-700">
+                        Finalización
+                    </span>
+
+                    <input
+                        type="time"
+                        name="endTime"
+                        required
+                        defaultValue={
+                            schedule?.endTime ??
+                            "16:00"
+                        }
+                        className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-950 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100"
+                    />
+                </label>
+
+                <label className="block">
+                    <span className="text-sm font-medium text-slate-700">
+                        Duración
+                    </span>
+
+                    <select
+                        name="appointmentDurationMinutes"
+                        defaultValue={
+                            schedule
+                                ?.appointmentDurationMinutes ??
+                            30
+                        }
+                        className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-950 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100"
+                    >
+                        <option value="30">
+                            30 minutos
+                        </option>
+                        <option value="60">
+                            60 minutos
+                        </option>
+                    </select>
+                </label>
+            </div>
+
+            {state.message ? (
+                <div
+                    className={[
+                        "mt-4 rounded-xl border px-4 py-3 text-sm",
+                        state.ok
+                            ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                            : "border-red-200 bg-red-50 text-red-800",
+                    ].join(" ")}
+                >
+                    {state.message}
+                </div>
+            ) : null}
+
+            <div className="mt-5 flex justify-end">
+                <button
+                    type="submit"
+                    disabled={pending}
+                    className="inline-flex items-center gap-2 rounded-xl bg-cyan-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-cyan-800 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                    <Save className="h-4 w-4" />
+
+                    {pending
+                        ? "Guardando..."
+                        : "Guardar horario"}
+                </button>
+            </div>
+        </form>
     );
 }
 
@@ -369,12 +574,15 @@ export default function DoctorPanel({
                             <option value="">
                                 Todos los estados
                             </option>
+
                             <option value="SCHEDULED">
                                 Programadas
                             </option>
+
                             <option value="COMPLETED">
                                 Completadas
                             </option>
+
                             <option value="CANCELLED">
                                 Canceladas
                             </option>
@@ -445,6 +653,40 @@ export default function DoctorPanel({
                         )}
                     </div>
                 )}
+            </section>
+
+            <section className="mt-10 border-t border-slate-200 pt-10">
+                <div>
+                    <h2 className="text-xl font-semibold text-slate-950">
+                        Horario semanal
+                    </h2>
+
+                    <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-600">
+                        Configura los días y horas en los que
+                        el personal podrá programar citas.
+                        No podrás desactivar o reducir un
+                        horario si deja citas futuras fuera.
+                    </p>
+                </div>
+
+                <div className="mt-5 grid gap-4 xl:grid-cols-2">
+                    {weekdays.map((weekday) => {
+                        const schedule =
+                            agenda.schedules.find(
+                                (item) =>
+                                    item.weekday ===
+                                    weekday.value
+                            ) ?? null;
+
+                        return (
+                            <ScheduleDayForm
+                                key={weekday.value}
+                                weekday={weekday}
+                                schedule={schedule}
+                            />
+                        );
+                    })}
+                </div>
             </section>
         </div>
     );

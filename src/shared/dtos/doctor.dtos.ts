@@ -32,6 +32,18 @@ export type DoctorAppointmentDTO = {
     hasMedicalNote: boolean;
 };
 
+export type DoctorScheduleDTO = {
+    id: string;
+    doctorId: string;
+    weekday: number;
+    startTime: string;
+    endTime: string;
+    appointmentDurationMinutes: 30 | 60;
+    isActive: boolean;
+    createdAt: string;
+    updatedAt: string;
+};
+
 export type DoctorAgendaSummaryDTO = {
     todayScheduled: number;
     upcomingScheduled: number;
@@ -42,5 +54,15 @@ export type DoctorAgendaSummaryDTO = {
 export type DoctorAgendaDTO = {
     doctor: DoctorProfileDTO;
     appointments: DoctorAppointmentDTO[];
+    schedules: DoctorScheduleDTO[];
     summary: DoctorAgendaSummaryDTO;
+};
+
+export type UpsertDoctorScheduleRepositoryInput = {
+    doctorId: string;
+    weekday: number;
+    startTime: string;
+    endTime: string;
+    appointmentDurationMinutes: 30 | 60;
+    isActive: boolean;
 };

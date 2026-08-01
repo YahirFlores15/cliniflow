@@ -1,7 +1,7 @@
-import { ArrowRight, CalendarCheck2, CalendarClock, Stethoscope, UserPlus, UsersRound, } from "lucide-react";
+import { ArrowRight, CalendarCheck2, CalendarClock, CalendarDays, CalendarPlus, Stethoscope, UserPlus, UsersRound, } from "lucide-react";
 import { getStaffAppointments, getStaffDoctors, getStaffPatients, } from "@/server/modules/staff/staff.service";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, } from "@/components/ui/card";
-import { buttonVariants } from "@/components/ui/button";
+import { buttonVariants, } from "@/components/ui/button";
 import { requireRole } from "@/server/auth/session";
 import { ROLES } from "@/shared/constants/roles";
 import { Badge } from "@/components/ui/badge";
@@ -12,10 +12,13 @@ import Link from "next/link";
 function getTodayDate(): string {
     const now = new Date();
 
-    const year = now.getFullYear();
+    const year =
+        now.getFullYear();
+
     const month = String(
         now.getMonth() + 1
     ).padStart(2, "0");
+
     const day = String(
         now.getDate()
     ).padStart(2, "0");
@@ -27,9 +30,15 @@ function formatDate(
     value: string
 ): string {
     const [year, month, day] =
-        value.split("-").map(Number);
+        value
+            .split("-")
+            .map(Number);
 
-    if (!year || !month || !day) {
+    if (
+        !year ||
+        !month ||
+        !day
+    ) {
         return value;
     }
 
@@ -39,25 +48,37 @@ function formatDate(
             dateStyle: "medium",
         }
     ).format(
-        new Date(year, month - 1, day)
+        new Date(
+            year,
+            month - 1,
+            day
+        )
     );
 }
 
 export default async function StaffPage() {
-    const session = await requireRole([
-        ROLES.STAFF,
-    ]);
+    const session =
+        await requireRole([
+            ROLES.STAFF,
+        ]);
 
-    const patients = getStaffPatients();
-    const doctors = getStaffDoctors();
+    const patients =
+        getStaffPatients();
+
+    const doctors =
+        getStaffDoctors();
+
     const appointments =
         getStaffAppointments();
 
-    const today = getTodayDate();
+    const today =
+        getTodayDate();
 
-    const activePatients = patients.filter(
-        (patient) => patient.isActive
-    ).length;
+    const activePatients =
+        patients.filter(
+            (patient) =>
+                patient.isActive
+        ).length;
 
     const todayAppointments =
         appointments.filter(
@@ -88,38 +109,50 @@ export default async function StaffPage() {
 
     const stats = [
         {
-            label: "Pacientes activos",
-            value: activePatients,
+            label:
+                "Pacientes activos",
+            value:
+                activePatients,
             description:
                 `${patients.length} pacientes registrados`,
-            icon: UsersRound,
+            icon:
+                UsersRound,
             iconClassName:
                 "border-primary-border bg-primary-soft text-primary",
         },
         {
-            label: "Citas para hoy",
-            value: todayAppointments.length,
+            label:
+                "Citas para hoy",
+            value:
+                todayAppointments.length,
             description:
                 "Consultas programadas para hoy",
-            icon: CalendarCheck2,
+            icon:
+                CalendarCheck2,
             iconClassName:
                 "border-secondary-border bg-secondary-soft text-secondary",
         },
         {
-            label: "Citas programadas",
-            value: scheduledAppointments,
+            label:
+                "Citas programadas",
+            value:
+                scheduledAppointments,
             description:
                 "Citas pendientes en agenda",
-            icon: CalendarClock,
+            icon:
+                CalendarClock,
             iconClassName:
                 "border-warning-border bg-warning-soft text-warning-hover",
         },
         {
-            label: "Doctores disponibles",
-            value: doctors.length,
+            label:
+                "Doctores disponibles",
+            value:
+                doctors.length,
             description:
                 "Perfiles médicos activos",
-            icon: Stethoscope,
+            icon:
+                Stethoscope,
             iconClassName:
                 "border-primary-border bg-primary-soft text-primary",
         },
@@ -133,7 +166,9 @@ export default async function StaffPage() {
                         <div className="flex size-12 items-center justify-center rounded-2xl bg-primary text-white shadow-sm">
                             <CalendarCheck2
                                 className="size-6"
-                                strokeWidth={1.9}
+                                strokeWidth={
+                                    1.9
+                                }
                             />
                         </div>
 
@@ -142,68 +177,86 @@ export default async function StaffPage() {
                         </p>
 
                         <h2 className="mt-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-                            Hola, {session.user.name}
+                            Hola,{" "}
+                            {
+                                session.user
+                                    .name
+                            }
                         </h2>
 
                         <p className="mt-3 max-w-2xl text-sm leading-6 text-foreground-muted">
-                            Consulta el estado de la agenda y
-                            administra los datos de los pacientes
-                            desde módulos separados.
+                            Consulta la agenda, administra pacientes y revisa la disponibilidad médica desde módulos separados.
                         </p>
                     </div>
 
                     <Link
-                        href="/staff/patients"
+                        href="/staff/appointments"
                         className={cn(
                             buttonVariants({
-                                variant: "primary",
+                                variant:
+                                    "primary",
                                 size: "lg",
                             }),
                             "w-full lg:w-auto"
                         )}
                     >
-                        Ver pacientes
+                        Abrir calendario
                         <ArrowRight className="size-4" />
                     </Link>
                 </div>
             </section>
 
             <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                {stats.map((stat) => {
-                    const Icon = stat.icon;
+                {stats.map(
+                    (stat) => {
+                        const Icon =
+                            stat.icon;
 
-                    return (
-                        <Card key={stat.label}>
-                            <CardContent className="flex items-start justify-between gap-4">
-                                <div>
-                                    <p className="text-sm font-medium text-foreground-muted">
-                                        {stat.label}
-                                    </p>
+                        return (
+                            <Card
+                                key={
+                                    stat.label
+                                }
+                            >
+                                <CardContent className="flex items-start justify-between gap-4">
+                                    <div>
+                                        <p className="text-sm font-medium text-foreground-muted">
+                                            {
+                                                stat.label
+                                            }
+                                        </p>
 
-                                    <p className="mt-2 text-3xl font-bold tracking-tight text-foreground">
-                                        {stat.value}
-                                    </p>
+                                        <p className="mt-2 text-3xl font-bold tracking-tight text-foreground">
+                                            {
+                                                stat.value
+                                            }
+                                        </p>
 
-                                    <p className="mt-2 text-xs leading-5 text-foreground-muted">
-                                        {stat.description}
-                                    </p>
-                                </div>
+                                        <p className="mt-2 text-xs leading-5 text-foreground-muted">
+                                            {
+                                                stat.description
+                                            }
+                                        </p>
+                                    </div>
 
-                                <div
-                                    className={cn(
-                                        "flex size-11 shrink-0 items-center justify-center rounded-xl border",
-                                        stat.iconClassName
-                                    )}
-                                >
-                                    <Icon
-                                        className="size-5"
-                                        strokeWidth={1.9}
-                                    />
-                                </div>
-                            </CardContent>
-                        </Card>
-                    );
-                })}
+                                    <div
+                                        className={cn(
+                                            "flex size-11 shrink-0 items-center justify-center rounded-xl border",
+                                            stat.iconClassName
+                                        )}
+                                    >
+                                        <Icon
+                                            className="size-5"
+                                            strokeWidth={
+                                                1.9
+                                            }
+                                        />
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        );
+                    }
+                )}
             </section>
 
             <section className="grid gap-6 xl:grid-cols-[1.3fr_0.7fr]">
@@ -220,7 +273,9 @@ export default async function StaffPage() {
                         </div>
 
                         <Badge variant="primary">
-                            {upcomingAppointments.length}
+                            {
+                                upcomingAppointments.length
+                            }
                         </Badge>
                     </CardHeader>
 
@@ -229,7 +284,9 @@ export default async function StaffPage() {
                             0 ? (
                             <div className="divide-y divide-border">
                                 {upcomingAppointments.map(
-                                    (appointment) => (
+                                    (
+                                        appointment
+                                    ) => (
                                         <div
                                             key={
                                                 appointment.id
@@ -247,11 +304,15 @@ export default async function StaffPage() {
                                                     {formatDate(
                                                         appointment.scheduledDate
                                                     )}
-                                                    {" · "}
+                                                    {
+                                                        " · "
+                                                    }
                                                     {
                                                         appointment.startTime
                                                     }
-                                                    {" · "}
+                                                    {
+                                                        " · "
+                                                    }
                                                     {
                                                         appointment.doctorName
                                                     }
@@ -295,16 +356,32 @@ export default async function StaffPage() {
                         </CardTitle>
 
                         <CardDescription>
-                            Accesos a las operaciones más frecuentes de recepción.
+                            Operaciones frecuentes del personal de recepción.
                         </CardDescription>
                     </CardHeader>
 
                     <CardContent className="space-y-3">
                         <Link
+                            href="/staff/appointments/new"
+                            className={cn(
+                                buttonVariants({
+                                    variant:
+                                        "primary",
+                                    size: "lg",
+                                }),
+                                "w-full justify-start"
+                            )}
+                        >
+                            <CalendarPlus className="size-5" />
+                            Agendar cita
+                        </Link>
+
+                        <Link
                             href="/staff/patients"
                             className={cn(
                                 buttonVariants({
-                                    variant: "outline",
+                                    variant:
+                                        "outline",
                                     size: "lg",
                                 }),
                                 "w-full justify-start"
@@ -318,7 +395,8 @@ export default async function StaffPage() {
                             href="/staff/patients/new"
                             className={cn(
                                 buttonVariants({
-                                    variant: "outline",
+                                    variant:
+                                        "outline",
                                     size: "lg",
                                 }),
                                 "w-full justify-start"
@@ -328,15 +406,20 @@ export default async function StaffPage() {
                             Registrar paciente
                         </Link>
 
-                        <div className="rounded-2xl border border-warning-border bg-warning-soft p-4">
-                            <p className="text-xs font-bold uppercase tracking-[0.14em] text-warning-hover">
-                                Próximo bloque
-                            </p>
-
-                            <p className="mt-2 text-sm leading-6 text-foreground-muted">
-                                La agenda será sustituida por un calendario semanal y mensual.
-                            </p>
-                        </div>
+                        <Link
+                            href="/staff/availability"
+                            className={cn(
+                                buttonVariants({
+                                    variant:
+                                        "outline",
+                                    size: "lg",
+                                }),
+                                "w-full justify-start"
+                            )}
+                        >
+                            <CalendarDays className="size-5" />
+                            Ver disponibilidad
+                        </Link>
                     </CardContent>
                 </Card>
             </section>

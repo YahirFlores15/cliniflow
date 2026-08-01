@@ -9,14 +9,21 @@ import {
     Stethoscope,
     UserRound,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import {
+    useMemo,
+    useState,
+} from "react";
+import { useRouter } from "next/navigation";
 
 import { CancelAppointmentForm } from "@/app/(protected)/staff/appointments/cancel-appointment-form";
 import { RescheduleAppointmentForm } from "@/app/(protected)/staff/appointments/reschedule-appointment-form";
 import { AppointmentCalendar } from "@/components/calendar/appointment-calendar";
 import type {
     CalendarAppointment,
+    CalendarDoctorBlock,
     CalendarDoctorOption,
+    CalendarDoctorSchedule,
+    CalendarSlotSelection,
 } from "@/components/calendar/calendar.types";
 import { formatFullDate } from "@/components/calendar/calendar.utils";
 import { Badge } from "@/components/ui/badge";
@@ -26,6 +33,8 @@ import { Drawer } from "@/components/ui/drawer";
 type StaffAppointmentsCalendarProps = {
     appointments: CalendarAppointment[];
     doctors: CalendarDoctorOption[];
+    schedules: CalendarDoctorSchedule[];
+    blocks: CalendarDoctorBlock[];
 };
 
 type DrawerMode =
@@ -95,14 +104,25 @@ function getDrawerDescription(
 export function StaffAppointmentsCalendar({
     appointments,
     doctors,
+    schedules,
+    blocks,
 }: StaffAppointmentsCalendarProps) {
+    const router = useRouter();
+
     const [
         selectedAppointmentId,
         setSelectedAppointmentId,
-    ] = useState<string | null>(null);
+    ] = useState<string | null>(
+        null
+    );
 
-    const [drawerMode, setDrawerMode] =
-        useState<DrawerMode>("DETAIL");
+    const [
+        drawerMode,
+        setDrawerMode,
+    ] =
+        useState<DrawerMode>(
+            "DETAIL"
+        );
 
     const selectedAppointment =
         useMemo(
@@ -128,11 +148,33 @@ export function StaffAppointmentsCalendar({
         setSelectedAppointmentId(
             appointment.id
         );
+
         setDrawerMode("DETAIL");
     }
 
+    function selectAvailableSlot(
+        selection: CalendarSlotSelection
+    ): void {
+        const params =
+            new URLSearchParams({
+                doctorId:
+                    selection.doctorId,
+                date:
+                    selection.scheduledDate,
+                time:
+                    selection.startTime,
+            });
+
+        router.push(
+            `/staff/appointments/new?${params.toString()}`
+        );
+    }
+
     function closeDrawer(): void {
-        setSelectedAppointmentId(null);
+        setSelectedAppointmentId(
+            null
+        );
+
         setDrawerMode("DETAIL");
     }
 
@@ -143,10 +185,18 @@ export function StaffAppointmentsCalendar({
     return (
         <>
             <AppointmentCalendar
-                appointments={appointments}
+                appointments={
+                    appointments
+                }
                 doctors={doctors}
+                schedules={schedules}
+                blocks={blocks}
+                allowSlotSelection
                 onAppointmentSelect={
                     selectAppointment
+                }
+                onAvailableSlotSelect={
+                    selectAvailableSlot
                 }
             />
 
@@ -163,16 +213,14 @@ export function StaffAppointmentsCalendar({
                 onClose={closeDrawer}
                 footer={
                     selectedAppointment &&
-                        drawerMode === "DETAIL" ? (
+                        drawerMode ===
+                        "DETAIL" ? (
                         <div className="grid gap-3 sm:grid-cols-2">
                             <Button
                                 type="button"
                                 variant="outline"
-                                disabled={!canModify}
-                                title={
-                                    canModify
-                                        ? "Reagendar cita"
-                                        : "Solo las citas programadas pueden reagendarse"
+                                disabled={
+                                    !canModify
                                 }
                                 onClick={() =>
                                     setDrawerMode(
@@ -187,11 +235,8 @@ export function StaffAppointmentsCalendar({
                             <Button
                                 type="button"
                                 variant="danger"
-                                disabled={!canModify}
-                                title={
-                                    canModify
-                                        ? "Cancelar cita"
-                                        : "Solo las citas programadas pueden cancelarse"
+                                disabled={
+                                    !canModify
                                 }
                                 onClick={() =>
                                     setDrawerMode(
@@ -214,32 +259,38 @@ export function StaffAppointmentsCalendar({
                         appointment={
                             selectedAppointment
                         }
-                        onCancel={showDetails}
+                        onCancel={
+                            showDetails
+                        }
                     />
                 ) : null}
 
                 {selectedAppointment &&
-                    drawerMode === "CANCEL" ? (
+                    drawerMode ===
+                    "CANCEL" ? (
                     <CancelAppointmentForm
                         key={`cancel-${selectedAppointment.id}`}
                         appointment={
                             selectedAppointment
                         }
-                        onCancel={showDetails}
+                        onCancel={
+                            showDetails
+                        }
                     />
                 ) : null}
 
                 {selectedAppointment &&
-                    drawerMode === "DETAIL" ? (
+                    drawerMode ===
+                    "DETAIL" ? (
                     <div className="space-y-6">
                         <section className="rounded-2xl border border-primary-border bg-primary-soft p-5">
-                            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                            <div className="flex items-start justify-between gap-4">
                                 <div>
                                     <p className="text-xs font-bold uppercase tracking-[0.15em] text-primary">
                                         Consulta
                                     </p>
 
-                                    <h3 className="mt-2 text-xl font-bold tracking-tight text-foreground">
+                                    <h3 className="mt-2 text-xl font-bold text-foreground">
                                         {
                                             selectedAppointment.patientName
                                         }
@@ -264,114 +315,76 @@ export function StaffAppointmentsCalendar({
                             </div>
                         </section>
 
-                        <section>
-                            <h3 className="text-sm font-semibold text-foreground">
-                                Fecha y horario
-                            </h3>
+                        <section className="grid gap-3 sm:grid-cols-2">
+                            <div className="rounded-2xl border border-border bg-surface-muted p-4">
+                                <CalendarClock className="size-5 text-primary" />
 
-                            <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                                <div className="rounded-2xl border border-border bg-surface-muted p-4">
-                                    <CalendarClock className="size-5 text-primary" />
+                                <p className="mt-3 text-xs font-bold uppercase text-foreground-muted">
+                                    Fecha
+                                </p>
 
-                                    <p className="mt-3 text-xs font-bold uppercase tracking-[0.12em] text-foreground-muted">
-                                        Fecha
+                                <p className="mt-1 text-sm font-semibold text-foreground">
+                                    {formatFullDate(
+                                        selectedAppointment.scheduledDate
+                                    )}
+                                </p>
+                            </div>
+
+                            <div className="rounded-2xl border border-border bg-surface-muted p-4">
+                                <Clock3 className="size-5 text-secondary" />
+
+                                <p className="mt-3 text-xs font-bold uppercase text-foreground-muted">
+                                    Horario
+                                </p>
+
+                                <p className="mt-1 text-sm font-semibold text-foreground">
+                                    {
+                                        selectedAppointment.startTime
+                                    }
+                                    {" – "}
+                                    {
+                                        selectedAppointment.endTime
+                                    }
+                                </p>
+                            </div>
+                        </section>
+
+                        <section className="rounded-2xl border border-border p-4">
+                            <div className="flex gap-3">
+                                <UserRound className="size-5 text-primary" />
+
+                                <div>
+                                    <p className="text-sm font-semibold text-foreground">
+                                        {
+                                            selectedAppointment.patientName
+                                        }
                                     </p>
 
-                                    <p className="mt-1 text-sm font-semibold text-foreground">
-                                        {formatFullDate(
-                                            selectedAppointment.scheduledDate
-                                        )}
+                                    <p className="mt-1 flex items-center gap-2 text-xs text-foreground-muted">
+                                        <Mail className="size-3.5" />
+                                        {
+                                            selectedAppointment.patientEmail
+                                        }
                                     </p>
                                 </div>
+                            </div>
+                        </section>
 
-                                <div className="rounded-2xl border border-border bg-surface-muted p-4">
-                                    <Clock3 className="size-5 text-secondary" />
+                        <section className="rounded-2xl border border-border p-4">
+                            <div className="flex gap-3">
+                                <Stethoscope className="size-5 text-secondary" />
 
-                                    <p className="mt-3 text-xs font-bold uppercase tracking-[0.12em] text-foreground-muted">
-                                        Horario
-                                    </p>
-
-                                    <p className="mt-1 text-sm font-semibold text-foreground">
+                                <div>
+                                    <p className="text-sm font-semibold text-foreground">
                                         {
-                                            selectedAppointment.startTime
-                                        }
-                                        {" – "}
-                                        {
-                                            selectedAppointment.endTime
+                                            selectedAppointment.doctorName
                                         }
                                     </p>
 
                                     <p className="mt-1 text-xs text-foreground-muted">
-                                        {
-                                            selectedAppointment.durationMinutes
-                                        }{" "}
-                                        minutos
+                                        {selectedAppointment.doctorSpecialty ??
+                                            "Sin especialidad registrada"}
                                     </p>
-                                </div>
-                            </div>
-                        </section>
-
-                        <section>
-                            <h3 className="text-sm font-semibold text-foreground">
-                                Paciente
-                            </h3>
-
-                            <div className="mt-3 rounded-2xl border border-border bg-surface p-4 shadow-[var(--shadow-sm)]">
-                                <div className="flex items-start gap-3">
-                                    <div className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-primary-border bg-primary-soft text-primary">
-                                        <UserRound
-                                            className="size-5"
-                                            strokeWidth={1.9}
-                                        />
-                                    </div>
-
-                                    <div className="min-w-0">
-                                        <p className="text-sm font-semibold text-foreground">
-                                            {
-                                                selectedAppointment.patientName
-                                            }
-                                        </p>
-
-                                        <p className="mt-1 flex items-center gap-2 text-xs text-foreground-muted">
-                                            <Mail className="size-3.5 shrink-0" />
-
-                                            <span className="truncate">
-                                                {
-                                                    selectedAppointment.patientEmail
-                                                }
-                                            </span>
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        </section>
-
-                        <section>
-                            <h3 className="text-sm font-semibold text-foreground">
-                                Médico
-                            </h3>
-
-                            <div className="mt-3 rounded-2xl border border-border bg-surface p-4 shadow-[var(--shadow-sm)]">
-                                <div className="flex items-start gap-3">
-                                    <div className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-secondary-border bg-secondary-soft text-secondary">
-                                        <Stethoscope
-                                            className="size-5"
-                                            strokeWidth={1.9}
-                                        />
-                                    </div>
-
-                                    <div className="min-w-0">
-                                        <p className="text-sm font-semibold text-foreground">
-                                            {
-                                                selectedAppointment.doctorName
-                                            }
-                                        </p>
-
-                                        <p className="mt-1 text-xs text-foreground-muted">
-                                            {selectedAppointment.doctorSpecialty ??
-                                                "Sin especialidad registrada"}
-                                        </p>
-                                    </div>
                                 </div>
                             </div>
                         </section>
@@ -398,7 +411,7 @@ export function StaffAppointmentsCalendar({
                                 </h3>
 
                                 <div className="mt-3 rounded-2xl border border-danger-border bg-danger-soft p-4">
-                                    <p className="whitespace-pre-wrap text-sm leading-6 text-danger">
+                                    <p className="text-sm text-danger">
                                         {
                                             selectedAppointment.cancellationReason
                                         }
@@ -406,10 +419,6 @@ export function StaffAppointmentsCalendar({
                                 </div>
                             </section>
                         ) : null}
-
-                        <p className="text-xs leading-5 text-foreground-muted">
-                            Esta vista contiene únicamente información administrativa. El personal de recepción no puede consultar expediente, diagnósticos, recetas ni notas médicas.
-                        </p>
                     </div>
                 ) : null}
             </Drawer>

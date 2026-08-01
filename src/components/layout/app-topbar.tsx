@@ -77,7 +77,10 @@ function getPageInformation(
         };
     }
 
-    if (pathname === "/superuser") {
+    if (
+        pathname ===
+        "/superuser"
+    ) {
         return {
             eyebrow: "Administración",
             title: "Dashboard",
@@ -151,7 +154,23 @@ function getPageInformation(
         };
     }
 
-    if (pathname === "/staff") {
+    if (
+        pathname.startsWith(
+            "/staff/availability"
+        )
+    ) {
+        return {
+            eyebrow: "Recepción",
+            title: "Disponibilidad médica",
+            description:
+                "Horarios y bloqueos registrados.",
+        };
+    }
+
+    if (
+        pathname ===
+        "/staff"
+    ) {
         return {
             eyebrow: "Recepción",
             title: "Dashboard",
@@ -161,7 +180,9 @@ function getPageInformation(
     }
 
     if (
-        pathname.startsWith("/staff")
+        pathname.startsWith(
+            "/staff"
+        )
     ) {
         return {
             eyebrow: "Recepción",
@@ -172,7 +193,9 @@ function getPageInformation(
     }
 
     if (
-        pathname.startsWith("/doctor")
+        pathname.startsWith(
+            "/doctor"
+        )
     ) {
         return {
             eyebrow: "Área médica",
@@ -183,7 +206,9 @@ function getPageInformation(
     }
 
     if (
-        pathname.startsWith("/patient")
+        pathname.startsWith(
+            "/patient"
+        )
     ) {
         return {
             eyebrow: "Portal del paciente",
@@ -194,7 +219,8 @@ function getPageInformation(
     }
 
     return {
-        eyebrow: ROLE_LABELS[role],
+        eyebrow:
+            ROLE_LABELS[role],
         title: "ClinicFlow",
         description:
             "Sistema de gestión clínica.",
@@ -207,7 +233,8 @@ export function AppTopbar({
     onOpenMobile,
     onToggleCollapsed,
 }: AppTopbarProps) {
-    const pathname = usePathname();
+    const pathname =
+        usePathname();
 
     const pageInformation =
         getPageInformation(
@@ -224,7 +251,9 @@ export function AppTopbar({
                     size="icon"
                     className="lg:hidden"
                     aria-label="Abrir navegación"
-                    onClick={onOpenMobile}
+                    onClick={
+                        onOpenMobile
+                    }
                 >
                     <Menu className="size-5" />
                 </Button>
@@ -239,7 +268,9 @@ export function AppTopbar({
                             ? "Expandir navegación"
                             : "Contraer navegación"
                     }
-                    onClick={onToggleCollapsed}
+                    onClick={
+                        onToggleCollapsed
+                    }
                 >
                     {sidebarCollapsed ? (
                         <PanelLeftOpen className="size-5" />

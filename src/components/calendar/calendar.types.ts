@@ -34,6 +34,30 @@ export type CalendarDoctorOption = {
     specialty: string | null;
 };
 
+export type CalendarDoctorSchedule = {
+    id: string;
+    doctorId: string;
+    weekday: number;
+    startTime: string;
+    endTime: string;
+    appointmentDurationMinutes: 30 | 60;
+    isActive: boolean;
+};
+
+export type CalendarDoctorBlock = {
+    id: string;
+    doctorId: string;
+    startDateTime: string;
+    endDateTime: string;
+    reason: string | null;
+};
+
+export type CalendarSlotSelection = {
+    doctorId: string;
+    scheduledDate: string;
+    startTime: string;
+};
+
 export type CalendarDay = {
     date: Date;
     dateKey: string;

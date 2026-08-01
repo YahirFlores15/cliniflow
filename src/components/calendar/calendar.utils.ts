@@ -1,28 +1,33 @@
 import type { CalendarAppointment, CalendarDay, } from "@/components/calendar/calendar.types";
 
 
-const WEEKDAY_FORMATTER = new Intl.DateTimeFormat(
-    "es-MX",
-    {
-        weekday: "short",
-    }
-);
+const WEEKDAY_FORMATTER =
+    new Intl.DateTimeFormat(
+        "es-MX",
+        {
+            weekday: "short",
+        }
+    );
 
-const MONTH_FORMATTER = new Intl.DateTimeFormat(
-    "es-MX",
-    {
-        month: "long",
-        year: "numeric",
-    }
-);
+const MONTH_FORMATTER =
+    new Intl.DateTimeFormat(
+        "es-MX",
+        {
+            month: "long",
+            year: "numeric",
+        }
+    );
 
 const FULL_DATE_FORMATTER =
-    new Intl.DateTimeFormat("es-MX", {
-        weekday: "long",
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-    });
+    new Intl.DateTimeFormat(
+        "es-MX",
+        {
+            weekday: "long",
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+        }
+    );
 
 export function createLocalDate(
     dateKey: string
@@ -41,13 +46,36 @@ export function createLocalDate(
     );
 }
 
+export function createLocalDateTime(
+    dateKey: string,
+    time: string
+): Date {
+    const [year, month, day] =
+        dateKey.split("-").map(Number);
+
+    const [hours, minutes] =
+        time.split(":").map(Number);
+
+    return new Date(
+        year,
+        month - 1,
+        day,
+        hours,
+        minutes,
+        0,
+        0
+    );
+}
+
 export function toDateKey(
     date: Date
 ): string {
     const year = date.getFullYear();
+
     const month = String(
         date.getMonth() + 1
     ).padStart(2, "0");
+
     const day = String(
         date.getDate()
     ).padStart(2, "0");
@@ -72,7 +100,7 @@ export function addMonths(
     date: Date,
     amount: number
 ): Date {
-    const nextDate = new Date(
+    return new Date(
         date.getFullYear(),
         date.getMonth() + amount,
         1,
@@ -81,8 +109,6 @@ export function addMonths(
         0,
         0
     );
-
-    return nextDate;
 }
 
 export function startOfWeek(
@@ -90,12 +116,17 @@ export function startOfWeek(
 ): Date {
     const result = new Date(date);
     const weekday = result.getDay();
+
     const mondayOffset =
-        weekday === 0 ? -6 : 1 - weekday;
+        weekday === 0
+            ? -6
+            : 1 - weekday;
 
     result.setDate(
-        result.getDate() + mondayOffset
+        result.getDate() +
+        mondayOffset
     );
+
     result.setHours(12, 0, 0, 0);
 
     return result;
@@ -123,12 +154,13 @@ export function getWeekDays(
     const weekStart =
         startOfWeek(referenceDate);
 
-    const todayKey = toDateKey(
-        new Date()
-    );
+    const todayKey =
+        toDateKey(new Date());
 
     return Array.from(
-        { length: 7 },
+        {
+            length: 7,
+        },
         (_, index) => {
             const date = addDays(
                 weekStart,
@@ -155,17 +187,20 @@ export function getMonthDays(
     referenceDate: Date
 ): CalendarDay[] {
     const gridStart =
-        startOfMonthGrid(referenceDate);
+        startOfMonthGrid(
+            referenceDate
+        );
 
     const currentMonth =
         referenceDate.getMonth();
 
-    const todayKey = toDateKey(
-        new Date()
-    );
+    const todayKey =
+        toDateKey(new Date());
 
     return Array.from(
-        { length: 42 },
+        {
+            length: 42,
+        },
         (_, index) => {
             const date = addDays(
                 gridStart,
@@ -197,7 +232,9 @@ export function formatWeekday(
         WEEKDAY_FORMATTER.format(date);
 
     return (
-        value.charAt(0).toUpperCase() +
+        value
+            .charAt(0)
+            .toUpperCase() +
         value.slice(1)
     );
 }
@@ -209,7 +246,9 @@ export function formatMonthTitle(
         MONTH_FORMATTER.format(date);
 
     return (
-        value.charAt(0).toUpperCase() +
+        value
+            .charAt(0)
+            .toUpperCase() +
         value.slice(1)
     );
 }
@@ -223,14 +262,69 @@ export function formatFullDate(
         );
 
     return (
-        value.charAt(0).toUpperCase() +
+        value
+            .charAt(0)
+            .toUpperCase() +
         value.slice(1)
     );
 }
 
+export function timeToMinutes(
+    time: string
+): number {
+    const [hours, minutes] =
+        time.split(":").map(Number);
+
+    return hours * 60 + minutes;
+}
+
+export function minutesToTime(
+    totalMinutes: number
+): string {
+    const hours = Math.floor(
+        totalMinutes / 60
+    );
+
+    const minutes =
+        totalMinutes % 60;
+
+    return `${String(hours).padStart(
+        2,
+        "0"
+    )}:${String(minutes).padStart(
+        2,
+        "0"
+    )}`;
+}
+
+export function rangesOverlap(
+    firstStart: string,
+    firstEnd: string,
+    secondStart: string,
+    secondEnd: string
+): boolean {
+    return (
+        firstStart < secondEnd &&
+        firstEnd > secondStart
+    );
+}
+
+export function getIsoWeekday(
+    date: Date
+): number {
+    const weekday = date.getDay();
+
+    return weekday === 0
+        ? 7
+        : weekday;
+}
+
 export function getAppointmentsByDate(
     appointments: CalendarAppointment[]
-): Map<string, CalendarAppointment[]> {
+): Map<
+    string,
+    CalendarAppointment[]
+> {
     const appointmentsByDate =
         new Map<
             string,
@@ -253,7 +347,10 @@ export function getAppointmentsByDate(
         );
     }
 
-    for (const dateAppointments of appointmentsByDate.values()) {
+    for (
+        const dateAppointments
+        of appointmentsByDate.values()
+    ) {
         dateAppointments.sort(
             (first, second) =>
                 first.startTime.localeCompare(

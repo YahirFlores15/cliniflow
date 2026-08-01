@@ -1,5 +1,6 @@
 import { StaffAppointmentsCalendar } from "@/app/(protected)/staff/appointments/staff-appointments-calendar";
 import { getStaffAppointments, getStaffDoctors, } from "@/server/modules/staff/staff.service";
+import { getStaffCalendarAvailability } from "@/server/modules/staff/staff-calendar.service";
 import { ActionMessage } from "@/components/feedback/action-message";
 import { CalendarPlus, CalendarRange, } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
@@ -17,13 +18,18 @@ type StaffAppointmentsPageProps = {
 export default async function StaffAppointmentsPage({
     searchParams,
 }: StaffAppointmentsPageProps) {
-    await requireRole([ROLES.STAFF]);
+    await requireRole([
+        ROLES.STAFF,
+    ]);
 
     const appointments =
         getStaffAppointments();
 
     const doctors =
         getStaffDoctors();
+
+    const availability =
+        getStaffCalendarAvailability();
 
     const resolvedSearchParams =
         await searchParams;
@@ -70,12 +76,14 @@ export default async function StaffAppointmentsPage({
         );
 
     const calendarDoctors =
-        doctors.map((doctor) => ({
-            id: doctor.id,
-            name: doctor.name,
-            specialty:
-                doctor.specialty,
-        }));
+        doctors.map(
+            (doctor) => ({
+                id: doctor.id,
+                name: doctor.name,
+                specialty:
+                    doctor.specialty,
+            })
+        );
 
     return (
         <div className="flex flex-col gap-6">
@@ -97,7 +105,7 @@ export default async function StaffAppointmentsPage({
                     </h2>
 
                     <p className="mt-2 max-w-2xl text-sm leading-6 text-foreground-muted">
-                        Consulta la agenda, administra citas existentes o registra una nueva consulta.
+                        Selecciona un médico y pulsa una franja disponible para registrar una nueva cita.
                     </p>
                 </div>
 
@@ -126,6 +134,12 @@ export default async function StaffAppointmentsPage({
                 }
                 doctors={
                     calendarDoctors
+                }
+                schedules={
+                    availability.schedules
+                }
+                blocks={
+                    availability.blocks
                 }
             />
         </div>

@@ -55,6 +55,13 @@ export const ROLE_NAVIGATION: Record<
             href: "/staff/appointments",
             icon: CalendarRange,
         },
+        {
+            label: "Disponibilidad",
+            description:
+                "Horarios y bloqueos médicos",
+            href: "/staff/availability",
+            icon: CalendarDays,
+        },
     ],
 
     [ROLES.DOCTOR]: [
@@ -84,8 +91,12 @@ export const ROLE_HOME_ICONS: Record<
     Role,
     LucideIcon
 > = {
-    [ROLES.SUPERUSER]: ShieldCheck,
-    [ROLES.STAFF]: CalendarDays,
-    [ROLES.DOCTOR]: CalendarDays,
-    [ROLES.PATIENT]: HeartPulse,
+    [ROLES.SUPERUSER]:
+        ShieldCheck,
+    [ROLES.STAFF]:
+        CalendarDays,
+    [ROLES.DOCTOR]:
+        CalendarDays,
+    [ROLES.PATIENT]:
+        HeartPulse,
 };

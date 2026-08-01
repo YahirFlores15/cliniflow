@@ -50,7 +50,10 @@ const STATUS_LABELS = {
 } as const;
 
 function getAppointmentClasses(
-    appointment: CalendarAppointment
+    appointment: Pick<
+        CalendarAppointment,
+        "status"
+    >
 ): string {
     if (
         appointment.status ===
@@ -70,7 +73,10 @@ function getAppointmentClasses(
 }
 
 function getStatusVariant(
-    appointment: CalendarAppointment
+    appointment: Pick<
+        CalendarAppointment,
+        "status"
+    >
 ):
     | "success"
     | "danger"
@@ -100,11 +106,15 @@ export function AppointmentCalendar({
     const [view, setView] =
         useState<CalendarView>("WEEK");
 
-    const [referenceDate, setReferenceDate] =
-        useState(() => new Date());
+    const [
+        referenceDate,
+        setReferenceDate,
+    ] = useState(() => new Date());
 
-    const [doctorFilter, setDoctorFilter] =
-        useState("ALL");
+    const [
+        doctorFilter,
+        setDoctorFilter,
+    ] = useState("ALL");
 
     const filteredAppointments =
         useMemo(() => {
@@ -150,10 +160,12 @@ export function AppointmentCalendar({
                     startOfWeek(
                         referenceDate
                     );
-                const weekEnd = addDays(
-                    weekStart,
-                    6
-                );
+
+                const weekEnd =
+                    addDays(
+                        weekStart,
+                        6
+                    );
 
                 const startText =
                     new Intl.DateTimeFormat(
@@ -212,6 +224,14 @@ export function AppointmentCalendar({
 
     function goToday(): void {
         setReferenceDate(new Date());
+    }
+
+    function handleAppointmentClick(
+        appointment: CalendarAppointment
+    ): void {
+        onAppointmentSelect?.(
+            appointment
+        );
     }
 
     return (
@@ -367,217 +387,239 @@ export function AppointmentCalendar({
 
             {view === "WEEK" ? (
                 <div className="overflow-hidden rounded-2xl border border-border bg-surface shadow-[var(--shadow-sm)]">
-                    <div className="grid min-w-[980px] grid-cols-7 border-b border-border bg-surface-muted">
-                        {weekDays.map((day) => (
-                            <div
-                                key={day.dateKey}
-                                className="border-r border-border px-3 py-4 text-center last:border-r-0"
-                            >
-                                <p className="text-xs font-bold uppercase tracking-[0.1em] text-foreground-muted">
-                                    {formatWeekday(
-                                        day.date
-                                    )}
-                                </p>
-
-                                <div
-                                    className={cn(
-                                        "mx-auto mt-2 flex size-9 items-center justify-center rounded-xl text-sm font-bold",
-                                        day.isToday
-                                            ? "bg-primary text-white"
-                                            : "text-foreground"
-                                    )}
-                                >
-                                    {day.dayNumber}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-
                     <div className="overflow-x-auto">
-                        <div className="grid min-h-[520px] min-w-[980px] grid-cols-7">
-                            {weekDays.map((day) => {
-                                const dayAppointments =
-                                    appointmentsByDate.get(
-                                        day.dateKey
-                                    ) ?? [];
+                        <div className="min-w-[980px]">
+                            <div className="grid grid-cols-7 border-b border-border bg-surface-muted">
+                                {weekDays.map(
+                                    (day) => (
+                                        <div
+                                            key={
+                                                day.dateKey
+                                            }
+                                            className="border-r border-border px-3 py-4 text-center last:border-r-0"
+                                        >
+                                            <p className="text-xs font-bold uppercase tracking-[0.1em] text-foreground-muted">
+                                                {formatWeekday(
+                                                    day.date
+                                                )}
+                                            </p>
 
-                                return (
-                                    <div
-                                        key={
-                                            day.dateKey
-                                        }
-                                        className="border-r border-border p-2 last:border-r-0"
-                                    >
-                                        <div className="flex flex-col gap-2">
-                                            {dayAppointments.map(
-                                                (
-                                                    appointment
-                                                ) => (
-                                                    <button
-                                                        key={
-                                                            appointment.id
-                                                        }
-                                                        type="button"
-                                                        onClick={() =>
-                                                            onAppointmentSelect?.(
-                                                                appointment
-                                                            )
-                                                        }
-                                                        className={cn(
-                                                            "w-full rounded-xl border p-3 text-left transition hover:-translate-y-0.5 hover:shadow-sm",
-                                                            getAppointmentClasses(
-                                                                appointment
-                                                            )
-                                                        )}
-                                                    >
-                                                        <p className="text-xs font-bold">
-                                                            {
-                                                                appointment.startTime
-                                                            }
-                                                            {" – "}
-                                                            {
-                                                                appointment.endTime
-                                                            }
-                                                        </p>
-
-                                                        <p className="mt-1 line-clamp-2 text-sm font-semibold">
-                                                            {
-                                                                appointment.patientName
-                                                            }
-                                                        </p>
-
-                                                        <p className="mt-1 line-clamp-1 text-xs opacity-75">
-                                                            {
-                                                                appointment.doctorName
-                                                            }
-                                                        </p>
-                                                    </button>
-                                                )
-                                            )}
-
-                                            {dayAppointments.length ===
-                                                0 ? (
-                                                <div className="flex min-h-20 items-center justify-center rounded-xl border border-dashed border-border text-center text-xs text-foreground-muted">
-                                                    Sin citas
-                                                </div>
-                                            ) : null}
+                                            <div
+                                                className={cn(
+                                                    "mx-auto mt-2 flex size-9 items-center justify-center rounded-xl text-sm font-bold",
+                                                    day.isToday
+                                                        ? "bg-primary text-white"
+                                                        : "text-foreground"
+                                                )}
+                                            >
+                                                {
+                                                    day.dayNumber
+                                                }
+                                            </div>
                                         </div>
-                                    </div>
-                                );
-                            })}
+                                    )
+                                )}
+                            </div>
+
+                            <div className="grid min-h-[520px] grid-cols-7">
+                                {weekDays.map(
+                                    (day) => {
+                                        const dayAppointments =
+                                            appointmentsByDate.get(
+                                                day.dateKey
+                                            ) ??
+                                            [];
+
+                                        return (
+                                            <div
+                                                key={
+                                                    day.dateKey
+                                                }
+                                                className="border-r border-border p-2 last:border-r-0"
+                                            >
+                                                <div className="flex flex-col gap-2">
+                                                    {dayAppointments.map(
+                                                        (
+                                                            appointment
+                                                        ) => (
+                                                            <button
+                                                                key={
+                                                                    appointment.id
+                                                                }
+                                                                type="button"
+                                                                onClick={() =>
+                                                                    handleAppointmentClick(
+                                                                        appointment
+                                                                    )
+                                                                }
+                                                                className={cn(
+                                                                    "w-full rounded-xl border p-3 text-left transition hover:-translate-y-0.5 hover:shadow-sm focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15",
+                                                                    getAppointmentClasses(
+                                                                        appointment
+                                                                    )
+                                                                )}
+                                                            >
+                                                                <p className="text-xs font-bold">
+                                                                    {
+                                                                        appointment.startTime
+                                                                    }
+                                                                    {
+                                                                        " – "
+                                                                    }
+                                                                    {
+                                                                        appointment.endTime
+                                                                    }
+                                                                </p>
+
+                                                                <p className="mt-1 line-clamp-2 text-sm font-semibold">
+                                                                    {
+                                                                        appointment.patientName
+                                                                    }
+                                                                </p>
+
+                                                                <p className="mt-1 line-clamp-1 text-xs opacity-75">
+                                                                    {
+                                                                        appointment.doctorName
+                                                                    }
+                                                                </p>
+                                                            </button>
+                                                        )
+                                                    )}
+
+                                                    {dayAppointments.length ===
+                                                        0 ? (
+                                                        <div className="flex min-h-20 items-center justify-center rounded-xl border border-dashed border-border text-center text-xs text-foreground-muted">
+                                                            Sin citas
+                                                        </div>
+                                                    ) : null}
+                                                </div>
+                                            </div>
+                                        );
+                                    }
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
             ) : (
                 <div className="overflow-hidden rounded-2xl border border-border bg-surface shadow-[var(--shadow-sm)]">
-                    <div className="grid grid-cols-7 border-b border-border bg-surface-muted">
-                        {weekDays.map((day) => (
-                            <div
-                                key={
-                                    day.dateKey
-                                }
-                                className="px-2 py-3 text-center text-xs font-bold uppercase tracking-[0.08em] text-foreground-muted"
-                            >
-                                {formatWeekday(
-                                    day.date
+                    <div className="overflow-x-auto">
+                        <div className="min-w-[760px]">
+                            <div className="grid grid-cols-7 border-b border-border bg-surface-muted">
+                                {weekDays.map(
+                                    (day) => (
+                                        <div
+                                            key={
+                                                day.dateKey
+                                            }
+                                            className="px-2 py-3 text-center text-xs font-bold uppercase tracking-[0.08em] text-foreground-muted"
+                                        >
+                                            {formatWeekday(
+                                                day.date
+                                            )}
+                                        </div>
+                                    )
                                 )}
                             </div>
-                        ))}
-                    </div>
 
-                    <div className="grid min-w-[760px] grid-cols-7">
-                        {monthDays.map((day) => {
-                            const dayAppointments =
-                                appointmentsByDate.get(
-                                    day.dateKey
-                                ) ?? [];
+                            <div className="grid grid-cols-7">
+                                {monthDays.map(
+                                    (day) => {
+                                        const dayAppointments =
+                                            appointmentsByDate.get(
+                                                day.dateKey
+                                            ) ??
+                                            [];
 
-                            const visibleAppointments =
-                                dayAppointments.slice(
-                                    0,
-                                    3
-                                );
+                                        const visibleAppointments =
+                                            dayAppointments.slice(
+                                                0,
+                                                3
+                                            );
 
-                            const remainingCount =
-                                dayAppointments.length -
-                                visibleAppointments.length;
+                                        const remainingCount =
+                                            dayAppointments.length -
+                                            visibleAppointments.length;
 
-                            return (
-                                <div
-                                    key={
-                                        day.dateKey
-                                    }
-                                    className={cn(
-                                        "min-h-36 border-b border-r border-border p-2",
-                                        !day.isCurrentMonth &&
-                                        "bg-surface-muted/50"
-                                    )}
-                                >
-                                    <div
-                                        className={cn(
-                                            "flex size-8 items-center justify-center rounded-lg text-xs font-bold",
-                                            day.isToday
-                                                ? "bg-primary text-white"
-                                                : day.isCurrentMonth
-                                                    ? "text-foreground"
-                                                    : "text-foreground-muted"
-                                        )}
-                                        title={formatFullDate(
-                                            day.dateKey
-                                        )}
-                                    >
-                                        {
-                                            day.dayNumber
-                                        }
-                                    </div>
-
-                                    <div className="mt-2 space-y-1.5">
-                                        {visibleAppointments.map(
-                                            (
-                                                appointment
-                                            ) => (
-                                                <button
-                                                    key={
-                                                        appointment.id
-                                                    }
-                                                    type="button"
-                                                    onClick={() =>
-                                                        onAppointmentSelect?.(
-                                                            appointment
-                                                        )
-                                                    }
+                                        return (
+                                            <div
+                                                key={
+                                                    day.dateKey
+                                                }
+                                                className={cn(
+                                                    "min-h-36 border-b border-r border-border p-2",
+                                                    !day.isCurrentMonth &&
+                                                    "bg-surface-muted/50"
+                                                )}
+                                            >
+                                                <div
                                                     className={cn(
-                                                        "block w-full truncate rounded-lg border px-2 py-1.5 text-left text-[0.7rem] font-semibold",
-                                                        getAppointmentClasses(
-                                                            appointment
-                                                        )
+                                                        "flex size-8 items-center justify-center rounded-lg text-xs font-bold",
+                                                        day.isToday
+                                                            ? "bg-primary text-white"
+                                                            : day.isCurrentMonth
+                                                                ? "text-foreground"
+                                                                : "text-foreground-muted"
                                                     )}
-                                                    title={`${appointment.startTime} · ${appointment.patientName}`}
+                                                    title={formatFullDate(
+                                                        day.dateKey
+                                                    )}
                                                 >
                                                     {
-                                                        appointment.startTime
-                                                    }{" "}
-                                                    {
-                                                        appointment.patientName
+                                                        day.dayNumber
                                                     }
-                                                </button>
-                                            )
-                                        )}
+                                                </div>
 
-                                        {remainingCount >
-                                            0 ? (
-                                            <p className="px-1 text-xs font-semibold text-foreground-muted">
-                                                +
-                                                {
-                                                    remainingCount
-                                                }{" "}
-                                                citas
-                                            </p>
-                                        ) : null}
-                                    </div>
-                                </div>
-                            );
-                        })}
+                                                <div className="mt-2 space-y-1.5">
+                                                    {visibleAppointments.map(
+                                                        (
+                                                            appointment
+                                                        ) => (
+                                                            <button
+                                                                key={
+                                                                    appointment.id
+                                                                }
+                                                                type="button"
+                                                                onClick={() =>
+                                                                    handleAppointmentClick(
+                                                                        appointment
+                                                                    )
+                                                                }
+                                                                className={cn(
+                                                                    "block w-full truncate rounded-lg border px-2 py-1.5 text-left text-[0.7rem] font-semibold transition hover:shadow-sm focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15",
+                                                                    getAppointmentClasses(
+                                                                        appointment
+                                                                    )
+                                                                )}
+                                                                title={`${appointment.startTime} · ${appointment.patientName}`}
+                                                            >
+                                                                {
+                                                                    appointment.startTime
+                                                                }{" "}
+                                                                {
+                                                                    appointment.patientName
+                                                                }
+                                                            </button>
+                                                        )
+                                                    )}
+
+                                                    {remainingCount >
+                                                        0 ? (
+                                                        <p className="px-1 text-xs font-semibold text-foreground-muted">
+                                                            +
+                                                            {
+                                                                remainingCount
+                                                            }{" "}
+                                                            citas
+                                                        </p>
+                                                    ) : null}
+                                                </div>
+                                            </div>
+                                        );
+                                    }
+                                )}
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}
@@ -590,54 +632,47 @@ export function AppointmentCalendar({
                             "COMPLETED",
                             "CANCELLED",
                         ] as const
-                    ).map((status) => {
-                        const exampleAppointment =
-                            {
-                                status,
-                            } as CalendarAppointment;
-
-                        return (
-                            <div
-                                key={status}
-                                className="flex items-center justify-between gap-3 rounded-xl border border-border bg-surface-muted px-4 py-3"
-                            >
-                                <div className="flex items-center gap-2">
-                                    <div
-                                        className={cn(
-                                            "size-3 rounded-full border",
-                                            getAppointmentClasses(
-                                                exampleAppointment
-                                            )
-                                        )}
-                                    />
-
-                                    <span className="text-sm font-medium text-foreground">
-                                        {
-                                            STATUS_LABELS[
-                                            status
-                                            ]
-                                        }
-                                    </span>
-                                </div>
-
-                                <Badge
-                                    variant={getStatusVariant(
-                                        exampleAppointment
+                    ).map((status) => (
+                        <div
+                            key={status}
+                            className="flex items-center justify-between gap-3 rounded-xl border border-border bg-surface-muted px-4 py-3"
+                        >
+                            <div className="flex items-center gap-2">
+                                <div
+                                    className={cn(
+                                        "size-3 rounded-full border",
+                                        getAppointmentClasses({
+                                            status,
+                                        })
                                     )}
-                                >
+                                />
+
+                                <span className="text-sm font-medium text-foreground">
                                     {
-                                        filteredAppointments.filter(
-                                            (
-                                                appointment
-                                            ) =>
-                                                appointment.status ===
-                                                status
-                                        ).length
+                                        STATUS_LABELS[
+                                        status
+                                        ]
                                     }
-                                </Badge>
+                                </span>
                             </div>
-                        );
-                    })}
+
+                            <Badge
+                                variant={getStatusVariant({
+                                    status,
+                                })}
+                            >
+                                {
+                                    filteredAppointments.filter(
+                                        (
+                                            appointment
+                                        ) =>
+                                            appointment.status ===
+                                            status
+                                    ).length
+                                }
+                            </Badge>
+                        </div>
+                    ))}
                 </CardContent>
             </Card>
         </div>

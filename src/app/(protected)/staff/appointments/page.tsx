@@ -1,5 +1,5 @@
+import { StaffAppointmentsCalendar } from "@/app/(protected)/staff/appointments/staff-appointments-calendar";
 import { getStaffAppointments, getStaffDoctors, } from "@/server/modules/staff/staff.service";
-import { AppointmentCalendar } from "@/components/calendar/appointment-calendar";
 import { CalendarPlus, CalendarRange, } from "lucide-react";
 import { requireRole } from "@/server/auth/session";
 import { ROLES } from "@/shared/constants/roles";
@@ -23,12 +23,21 @@ export default async function StaffAppointmentsPage() {
                     appointment.patientName,
                 subtitle:
                     appointment.doctorName,
+
                 doctorId:
                     appointment.doctorId,
                 doctorName:
                     appointment.doctorName,
+                doctorSpecialty:
+                    appointment.specialty,
+
+                patientId:
+                    appointment.patientId,
                 patientName:
                     appointment.patientName,
+                patientEmail:
+                    appointment.patientEmail,
+
                 scheduledDate:
                     appointment.scheduledDate,
                 startTime:
@@ -37,10 +46,13 @@ export default async function StaffAppointmentsPage() {
                     appointment.endTime,
                 durationMinutes:
                     appointment.durationMinutes,
+
                 status:
                     appointment.status,
                 reason:
                     appointment.reason,
+                cancellationReason:
+                    appointment.cancellationReason,
             })
         );
 
@@ -72,7 +84,7 @@ export default async function StaffAppointmentsPage() {
                     </h2>
 
                     <p className="mt-2 max-w-2xl text-sm leading-6 text-foreground-muted">
-                        Consulta la agenda semanal o mensual y filtra las citas por médico.
+                        Consulta la agenda semanal o mensual, filtra por médico y selecciona una cita para revisar sus detalles.
                     </p>
                 </div>
 
@@ -87,7 +99,7 @@ export default async function StaffAppointmentsPage() {
                 </Button>
             </section>
 
-            <AppointmentCalendar
+            <StaffAppointmentsCalendar
                 appointments={
                     calendarAppointments
                 }

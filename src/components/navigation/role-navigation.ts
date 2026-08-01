@@ -1,4 +1,4 @@
-import { CalendarDays, CalendarRange, HeartPulse, LayoutDashboard, ShieldCheck, Stethoscope, UsersRound, type LucideIcon, } from "lucide-react";
+import { Ban, CalendarDays, CalendarRange, Clock3, HeartPulse, LayoutDashboard, ShieldCheck, Stethoscope, UsersRound, type LucideIcon, } from "lucide-react";
 import { ROLES, type Role, } from "@/shared/constants/roles";
 
 
@@ -66,12 +66,40 @@ export const ROLE_NAVIGATION: Record<
 
     [ROLES.DOCTOR]: [
         {
-            label: "Agenda médica",
+            label: "Dashboard",
             description:
-                "Consultas y atención clínica",
+                "Resumen de la jornada",
             href: "/doctor",
-            icon: Stethoscope,
+            icon: LayoutDashboard,
             exact: true,
+        },
+        {
+            label: "Agenda",
+            description:
+                "Calendario de consultas",
+            href: "/doctor/agenda",
+            icon: CalendarRange,
+        },
+        {
+            label: "Horarios",
+            description:
+                "Jornada semanal",
+            href: "/doctor/schedule",
+            icon: Clock3,
+        },
+        {
+            label: "Bloqueos",
+            description:
+                "Ausencias y periodos no disponibles",
+            href: "/doctor/blocks",
+            icon: Ban,
+        },
+        {
+            label: "Pacientes",
+            description:
+                "Expedientes relacionados",
+            href: "/doctor/patients",
+            icon: UsersRound,
         },
     ],
 
@@ -96,7 +124,7 @@ export const ROLE_HOME_ICONS: Record<
     [ROLES.STAFF]:
         CalendarDays,
     [ROLES.DOCTOR]:
-        CalendarDays,
+        Stethoscope,
     [ROLES.PATIENT]:
         HeartPulse,
 };

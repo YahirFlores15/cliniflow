@@ -50,10 +50,14 @@ type AppointmentCalendarProps = {
     doctors: CalendarDoctorOption[];
     schedules?: CalendarDoctorSchedule[];
     blocks?: CalendarDoctorBlock[];
+
     allowSlotSelection?: boolean;
+    showDoctorFilter?: boolean;
+
     onAppointmentSelect?: (
         appointment: CalendarAppointment
     ) => void;
+
     onAvailableSlotSelect?: (
         selection: CalendarSlotSelection
     ) => void;
@@ -65,10 +69,17 @@ const STATUS_LABELS = {
     COMPLETED: "Completada",
 } as const;
 
-const GRID_START_MINUTES = 7 * 60;
-const GRID_END_MINUTES = 20 * 60;
-const SLOT_MINUTES = 30;
-const SLOT_HEIGHT = 44;
+const GRID_START_MINUTES =
+    7 * 60;
+
+const GRID_END_MINUTES =
+    20 * 60;
+
+const SLOT_MINUTES =
+    30;
+
+const SLOT_HEIGHT =
+    44;
 
 function getAppointmentClasses(
     appointment: Pick<
@@ -125,32 +136,42 @@ export function AppointmentCalendar({
     schedules = [],
     blocks = [],
     allowSlotSelection = false,
+    showDoctorFilter = true,
     onAppointmentSelect,
     onAvailableSlotSelect,
 }: AppointmentCalendarProps) {
-    const [view, setView] =
-        useState<CalendarView>("WEEK");
+    const [
+        view,
+        setView,
+    ] =
+        useState<CalendarView>(
+            "WEEK"
+        );
 
     const [
         referenceDate,
         setReferenceDate,
-    ] = useState(
-        () => new Date()
-    );
+    ] =
+        useState(
+            () => new Date()
+        );
 
     const [
         doctorFilter,
         setDoctorFilter,
-    ] = useState(
-        doctors[0]?.id ?? "ALL"
-    );
+    ] =
+        useState(
+            doctors[0]?.id ??
+            "ALL"
+        );
 
     const [
         currentDateTime,
         setCurrentDateTime,
-    ] = useState<Date | null>(
-        null
-    );
+    ] =
+        useState<Date | null>(
+            null
+        );
 
     useEffect(() => {
         const updateCurrentDateTime =
@@ -175,10 +196,17 @@ export function AppointmentCalendar({
         };
     }, []);
 
+    const effectiveDoctorFilter =
+        showDoctorFilter
+            ? doctorFilter
+            : doctors[0]?.id ??
+            "ALL";
+
     const filteredAppointments =
         useMemo(() => {
             if (
-                doctorFilter === "ALL"
+                effectiveDoctorFilter ===
+                "ALL"
             ) {
                 return appointments;
             }
@@ -186,11 +214,11 @@ export function AppointmentCalendar({
             return appointments.filter(
                 (appointment) =>
                     appointment.doctorId ===
-                    doctorFilter
+                    effectiveDoctorFilter
             );
         }, [
             appointments,
-            doctorFilter,
+            effectiveDoctorFilter,
         ]);
 
     const appointmentsByDate =
@@ -202,40 +230,44 @@ export function AppointmentCalendar({
             [filteredAppointments]
         );
 
-    const weekDays = useMemo(
-        () =>
-            getWeekDays(
-                referenceDate
-            ),
-        [referenceDate]
-    );
+    const weekDays =
+        useMemo(
+            () =>
+                getWeekDays(
+                    referenceDate
+                ),
+            [referenceDate]
+        );
 
-    const monthDays = useMemo(
-        () =>
-            getMonthDays(
-                referenceDate
-            ),
-        [referenceDate]
-    );
+    const monthDays =
+        useMemo(
+            () =>
+                getMonthDays(
+                    referenceDate
+                ),
+            [referenceDate]
+        );
 
-    const timeSlots = useMemo(
-        () => {
-            const slots: number[] = [];
+    const timeSlots =
+        useMemo(() => {
+            const slots: number[] =
+                [];
 
             for (
                 let minutes =
                     GRID_START_MINUTES;
                 minutes <
                 GRID_END_MINUTES;
-                minutes += SLOT_MINUTES
+                minutes +=
+                SLOT_MINUTES
             ) {
-                slots.push(minutes);
+                slots.push(
+                    minutes
+                );
             }
 
             return slots;
-        },
-        []
-    );
+        }, []);
 
     const title =
         view === "WEEK"
@@ -284,7 +316,7 @@ export function AppointmentCalendar({
         doctors.find(
             (doctor) =>
                 doctor.id ===
-                doctorFilter
+                effectiveDoctorFilter
         ) ?? null;
 
     function goPrevious(): void {
@@ -331,7 +363,9 @@ export function AppointmentCalendar({
         }
 
         const weekday =
-            getIsoWeekday(date);
+            getIsoWeekday(
+                date
+            );
 
         return (
             schedules.find(
@@ -443,7 +477,9 @@ export function AppointmentCalendar({
         }
 
         const schedule =
-            getScheduleForDay(date);
+            getScheduleForDay(
+                date
+            );
 
         if (!schedule) {
             return {
@@ -602,54 +638,78 @@ export function AppointmentCalendar({
                         </div>
 
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-                            <div className="min-w-60">
-                                <label
-                                    htmlFor="calendar-doctor"
-                                    className="mb-2 block text-sm font-semibold text-foreground"
-                                >
-                                    Médico
-                                </label>
+                            {showDoctorFilter ? (
+                                <div className="min-w-60">
+                                    <label
+                                        htmlFor="calendar-doctor"
+                                        className="mb-2 block text-sm font-semibold text-foreground"
+                                    >
+                                        Médico
+                                    </label>
 
-                                <Select
-                                    id="calendar-doctor"
-                                    value={
-                                        doctorFilter
-                                    }
-                                    onChange={(
-                                        event
-                                    ) =>
-                                        setDoctorFilter(
+                                    <Select
+                                        id="calendar-doctor"
+                                        value={
+                                            doctorFilter
+                                        }
+                                        onChange={(
                                             event
-                                                .target
-                                                .value
-                                        )
-                                    }
-                                >
-                                    <option value="ALL">
-                                        Todos los médicos
-                                    </option>
+                                        ) =>
+                                            setDoctorFilter(
+                                                event
+                                                    .target
+                                                    .value
+                                            )
+                                        }
+                                    >
+                                        <option value="ALL">
+                                            Todos los médicos
+                                        </option>
 
-                                    {doctors.map(
-                                        (doctor) => (
-                                            <option
-                                                key={
-                                                    doctor.id
-                                                }
-                                                value={
-                                                    doctor.id
-                                                }
-                                            >
-                                                {
-                                                    doctor.name
-                                                }
-                                                {doctor.specialty
-                                                    ? ` · ${doctor.specialty}`
-                                                    : ""}
-                                            </option>
-                                        )
-                                    )}
-                                </Select>
-                            </div>
+                                        {doctors.map(
+                                            (
+                                                doctor
+                                            ) => (
+                                                <option
+                                                    key={
+                                                        doctor.id
+                                                    }
+                                                    value={
+                                                        doctor.id
+                                                    }
+                                                >
+                                                    {
+                                                        doctor.name
+                                                    }
+                                                    {doctor.specialty
+                                                        ? ` · ${doctor.specialty}`
+                                                        : ""}
+                                                </option>
+                                            )
+                                        )}
+                                    </Select>
+                                </div>
+                            ) : selectedDoctor ? (
+                                <div className="rounded-xl border border-primary-border bg-primary-soft px-4 py-3">
+                                    <p className="text-xs font-bold uppercase tracking-[0.12em] text-primary">
+                                        Médico
+                                    </p>
+
+                                    <p className="mt-1 text-sm font-semibold text-foreground">
+                                        {
+                                            selectedDoctor.name
+                                        }
+                                    </p>
+
+                                    {selectedDoctor.specialty ? (
+                                        <p className="mt-0.5 text-xs text-foreground-muted">
+                                            {
+                                                selectedDoctor.specialty
+                                            }
+                                        </p>
+                                    ) : null}
+                                </div>
+                            ) : null}
 
                             <div className="flex rounded-xl border border-border bg-surface-muted p-1">
                                 <Button
@@ -696,7 +756,9 @@ export function AppointmentCalendar({
                             type="button"
                             variant="outline"
                             size="sm"
-                            onClick={goToday}
+                            onClick={
+                                goToday
+                            }
                         >
                             <CalendarDays className="size-4" />
                             Hoy
@@ -708,7 +770,8 @@ export function AppointmentCalendar({
                                 variant="outline"
                                 size="icon"
                                 aria-label={
-                                    view === "WEEK"
+                                    view ===
+                                        "WEEK"
                                         ? "Semana anterior"
                                         : "Mes anterior"
                                 }
@@ -724,19 +787,23 @@ export function AppointmentCalendar({
                                 variant="outline"
                                 size="icon"
                                 aria-label={
-                                    view === "WEEK"
+                                    view ===
+                                        "WEEK"
                                         ? "Semana siguiente"
                                         : "Mes siguiente"
                                 }
-                                onClick={goNext}
+                                onClick={
+                                    goNext
+                                }
                             >
                                 <ChevronRight className="size-5" />
                             </Button>
                         </div>
                     </div>
 
-                    {view === "WEEK" &&
-                        doctorFilter ===
+                    {view ===
+                        "WEEK" &&
+                        effectiveDoctorFilter ===
                         "ALL" ? (
                         <div className="rounded-2xl border border-warning-border bg-warning-soft px-4 py-3">
                             <p className="text-sm font-semibold text-foreground">
@@ -751,7 +818,8 @@ export function AppointmentCalendar({
                 </CardContent>
             </Card>
 
-            {view === "WEEK" &&
+            {view ===
+                "WEEK" &&
                 selectedDoctor ? (
                 <div className="overflow-hidden rounded-2xl border border-border bg-surface shadow-[var(--shadow-sm)]">
                     <div className="overflow-x-auto">
@@ -762,7 +830,9 @@ export function AppointmentCalendar({
                                 </div>
 
                                 {weekDays.map(
-                                    (day) => (
+                                    (
+                                        day
+                                    ) => (
                                         <div
                                             key={
                                                 day.dateKey
@@ -813,7 +883,9 @@ export function AppointmentCalendar({
                                 </div>
 
                                 {weekDays.map(
-                                    (day) => {
+                                    (
+                                        day
+                                    ) => {
                                         const dayAppointments =
                                             appointmentsByDate.get(
                                                 day.dateKey
@@ -951,7 +1023,9 @@ export function AppointmentCalendar({
                                                                     {
                                                                         appointment.startTime
                                                                     }
-                                                                    {" – "}
+                                                                    {
+                                                                        " – "
+                                                                    }
                                                                     {
                                                                         appointment.endTime
                                                                     }
@@ -974,7 +1048,8 @@ export function AppointmentCalendar({
                         </div>
                     </div>
                 </div>
-            ) : view === "WEEK" ? (
+            ) : view ===
+                "WEEK" ? (
                 <Card>
                     <CardContent className="flex min-h-80 flex-col items-center justify-center text-center">
                         <CalendarDays className="size-10 text-primary" />
@@ -994,7 +1069,9 @@ export function AppointmentCalendar({
                         <div className="min-w-[760px]">
                             <div className="grid grid-cols-7 border-b border-border bg-surface-muted">
                                 {weekDays.map(
-                                    (day) => (
+                                    (
+                                        day
+                                    ) => (
                                         <div
                                             key={
                                                 day.dateKey
@@ -1011,7 +1088,9 @@ export function AppointmentCalendar({
 
                             <div className="grid grid-cols-7">
                                 {monthDays.map(
-                                    (day) => {
+                                    (
+                                        day
+                                    ) => {
                                         const dayAppointments =
                                             appointmentsByDate.get(
                                                 day.dateKey
@@ -1119,9 +1198,13 @@ export function AppointmentCalendar({
                             "CANCELLED",
                         ] as const
                     ).map(
-                        (status) => (
+                        (
+                            status
+                        ) => (
                             <div
-                                key={status}
+                                key={
+                                    status
+                                }
                                 className="flex items-center justify-between gap-3 rounded-xl border border-border bg-surface-muted px-4 py-3"
                             >
                                 <span className="text-sm font-medium text-foreground">
@@ -1146,7 +1229,8 @@ export function AppointmentCalendar({
                                             ) =>
                                                 appointment.status ===
                                                 status
-                                        ).length
+                                        )
+                                            .length
                                     }
                                 </Badge>
                             </div>

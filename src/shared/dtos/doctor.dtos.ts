@@ -8,7 +8,9 @@ export type DoctorProfileDTO = {
     email: string;
     specialty: string | null;
     licenseNumber: string | null;
-    defaultAppointmentDurationMinutes: 30 | 60;
+    defaultAppointmentDurationMinutes:
+    | 30
+    | 60;
     isActive: boolean;
 };
 
@@ -38,7 +40,9 @@ export type DoctorScheduleDTO = {
     weekday: number;
     startTime: string;
     endTime: string;
-    appointmentDurationMinutes: 30 | 60;
+    appointmentDurationMinutes:
+    | 30
+    | 60;
     isActive: boolean;
     createdAt: string;
     updatedAt: string;
@@ -103,6 +107,16 @@ export type DoctorAgendaDTO = {
     medicalRecords: MedicalRecordDTO[];
     medicalNotes: MedicalNoteDTO[];
     summary: DoctorAgendaSummaryDTO;
+};
+
+export type DoctorDashboardDTO = {
+    doctor: DoctorProfileDTO;
+    summary: DoctorAgendaSummaryDTO;
+    todayAppointments: DoctorAppointmentDTO[];
+    upcomingAppointments: DoctorAppointmentDTO[];
+    activeSchedules: DoctorScheduleDTO[];
+    upcomingBlocks: DoctorBlockDTO[];
+    relatedPatientsCount: number;
 };
 
 export type UpsertDoctorScheduleRepositoryInput = {

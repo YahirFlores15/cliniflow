@@ -181,27 +181,91 @@ function getPageInformation(
 
     if (
         pathname.startsWith(
-            "/staff"
+            "/doctor/appointments/note"
         )
     ) {
         return {
-            eyebrow: "Recepción",
-            title: "Operación de la clínica",
+            eyebrow: "Área médica",
+            title: "Nota médica",
             description:
-                "Pacientes, disponibilidad y gestión de citas.",
+                "Registro clínico de una consulta.",
         };
     }
 
     if (
         pathname.startsWith(
-            "/doctor"
+            "/doctor/patients/record"
         )
     ) {
         return {
             eyebrow: "Área médica",
-            title: "Agenda médica",
+            title: "Expediente clínico",
             description:
-                "Consultas, horarios y atención clínica.",
+                "Información permanente del paciente.",
+        };
+    }
+
+    if (
+        pathname.startsWith(
+            "/doctor/patients"
+        )
+    ) {
+        return {
+            eyebrow: "Área médica",
+            title: "Pacientes",
+            description:
+                "Pacientes relacionados mediante citas.",
+        };
+    }
+
+    if (
+        pathname.startsWith(
+            "/doctor/blocks"
+        )
+    ) {
+        return {
+            eyebrow: "Área médica",
+            title: "Bloqueos",
+            description:
+                "Ausencias y periodos no disponibles.",
+        };
+    }
+
+    if (
+        pathname.startsWith(
+            "/doctor/schedule"
+        )
+    ) {
+        return {
+            eyebrow: "Área médica",
+            title: "Horarios",
+            description:
+                "Configuración de la jornada semanal.",
+        };
+    }
+
+    if (
+        pathname.startsWith(
+            "/doctor/agenda"
+        )
+    ) {
+        return {
+            eyebrow: "Área médica",
+            title: "Agenda",
+            description:
+                "Calendario semanal y mensual de consultas.",
+        };
+    }
+
+    if (
+        pathname ===
+        "/doctor"
+    ) {
+        return {
+            eyebrow: "Área médica",
+            title: "Dashboard",
+            description:
+                "Resumen de la jornada médica.",
         };
     }
 
@@ -282,20 +346,23 @@ export function AppTopbar({
                 <div className="min-w-0 flex-1">
                     <p className="truncate text-xs font-bold uppercase tracking-[0.16em] text-primary">
                         {
-                            pageInformation.eyebrow
+                            pageInformation
+                                .eyebrow
                         }
                     </p>
 
                     <div className="mt-1 flex min-w-0 items-baseline gap-3">
                         <h1 className="truncate text-lg font-bold tracking-tight text-foreground sm:text-xl">
                             {
-                                pageInformation.title
+                                pageInformation
+                                    .title
                             }
                         </h1>
 
                         <p className="hidden truncate text-sm text-foreground-muted xl:block">
                             {
-                                pageInformation.description
+                                pageInformation
+                                    .description
                             }
                         </p>
                     </div>

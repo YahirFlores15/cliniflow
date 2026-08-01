@@ -1,4 +1,4 @@
-import type { AppointmentStatus } from "@/shared/schemas/staff.schemas";
+import type { AppointmentStatus, } from "@/shared/schemas/staff.schemas";
 
 
 export type CalendarView =
@@ -17,6 +17,8 @@ export type CalendarAppointment = {
     patientId: string;
     patientName: string;
     patientEmail: string;
+    patientPhone?: string | null;
+    patientBirthDate?: string | null;
 
     scheduledDate: string;
     startTime: string;
@@ -26,6 +28,8 @@ export type CalendarAppointment = {
     status: AppointmentStatus;
     reason: string | null;
     cancellationReason: string | null;
+
+    hasMedicalNote?: boolean;
 };
 
 export type CalendarDoctorOption = {
@@ -40,7 +44,9 @@ export type CalendarDoctorSchedule = {
     weekday: number;
     startTime: string;
     endTime: string;
-    appointmentDurationMinutes: 30 | 60;
+    appointmentDurationMinutes:
+    | 30
+    | 60;
     isActive: boolean;
 };
 

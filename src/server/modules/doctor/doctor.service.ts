@@ -1,5 +1,5 @@
 import { cancelAppointmentsForDoctorBlock, createDoctorBlock, createMedicalNote, deleteDoctorBlock, findAppointmentForDoctor, findDoctorBlockById, findDoctorProfileByUserId, findMedicalNoteByAppointment, findMedicalRecordForDoctor, hasDoctorAccessToPatient, hasDoctorBlockOverlap, hasFutureAppointmentsOutsideSchedule, hasFutureScheduledAppointmentsForWeekday, listAppointmentsForDoctor, listDoctorSchedules, listFutureDoctorBlocks, listMedicalNotesForDoctor, listMedicalRecordsForDoctor, listScheduledAppointmentIdsAffectedByBlock, upsertDoctorSchedule, upsertMedicalRecord, } from "@/server/modules/doctor/doctor.repository";
-import type { DoctorAgendaDTO, DoctorAgendaSummaryDTO, DoctorAppointmentDTO, DoctorBlockDTO, DoctorProfileDTO, DoctorScheduleDTO, MedicalNoteDTO, MedicalRecordDTO, } from "@/shared/dtos/doctor.dtos";
+import type { DoctorAgendaDTO, DoctorAgendaSummaryDTO, DoctorAppointmentDTO, DoctorBlockDTO, DoctorDashboardDTO, DoctorProfileDTO, DoctorScheduleDTO, MedicalNoteDTO, MedicalRecordDTO, } from "@/shared/dtos/doctor.dtos";
 import type { CreateDoctorBlockInput, CreateMedicalNoteInput, DeleteDoctorBlockInput, DoctorAgendaFilterInput, UpdateMedicalRecordInput, UpsertDoctorScheduleInput, } from "@/shared/schemas/doctor.schemas";
 import { getDb } from "@/server/db/connection";
 
@@ -14,7 +14,8 @@ export class DoctorDomainError extends Error {
 function getLocalCalendarDate(
     date = new Date()
 ): string {
-    const year = date.getFullYear();
+    const year =
+        date.getFullYear();
 
     const month = String(
         date.getMonth() + 1
@@ -56,20 +57,29 @@ function parseCalendarDate(
         return null;
     }
 
-    const year = Number(match[1]);
-    const month = Number(match[2]);
-    const day = Number(match[3]);
+    const year =
+        Number(match[1]);
 
-    const parsedDate = new Date(
-        year,
-        month - 1,
-        day
-    );
+    const month =
+        Number(match[2]);
+
+    const day =
+        Number(match[3]);
+
+    const parsedDate =
+        new Date(
+            year,
+            month - 1,
+            day
+        );
 
     if (
-        parsedDate.getFullYear() !== year ||
-        parsedDate.getMonth() !== month - 1 ||
-        parsedDate.getDate() !== day
+        parsedDate.getFullYear() !==
+        year ||
+        parsedDate.getMonth() !==
+        month - 1 ||
+        parsedDate.getDate() !==
+        day
     ) {
         return null;
     }
@@ -81,16 +91,20 @@ function parseLocalDateTime(params: {
     date: string;
     time: string;
 }): Date | null {
-    const parsedDate = parseCalendarDate(
-        params.date
-    );
+    const parsedDate =
+        parseCalendarDate(
+            params.date
+        );
 
     const timeMatch =
         /^([01]\d|2[0-3]):([0-5]\d)$/.exec(
             params.time
         );
 
-    if (!parsedDate || !timeMatch) {
+    if (
+        !parsedDate ||
+        !timeMatch
+    ) {
         return null;
     }
 
@@ -125,7 +139,8 @@ function timeToMinutes(
     }
 
     return (
-        Number(match[1]) * 60 +
+        Number(match[1]) *
+        60 +
         Number(match[2])
     );
 }
@@ -133,24 +148,32 @@ function timeToMinutes(
 function assertValidScheduleRange(params: {
     startTime: string;
     endTime: string;
-    appointmentDurationMinutes: 30 | 60;
+    appointmentDurationMinutes:
+    | 30
+    | 60;
 }): void {
-    const startMinutes = timeToMinutes(
-        params.startTime
-    );
+    const startMinutes =
+        timeToMinutes(
+            params.startTime
+        );
 
-    const endMinutes = timeToMinutes(
-        params.endTime
-    );
+    const endMinutes =
+        timeToMinutes(
+            params.endTime
+        );
 
-    if (startMinutes >= endMinutes) {
+    if (
+        startMinutes >=
+        endMinutes
+    ) {
         throw new DoctorDomainError(
             "La hora de inicio debe ser anterior a la hora de finalización."
         );
     }
 
     const availableMinutes =
-        endMinutes - startMinutes;
+        endMinutes -
+        startMinutes;
 
     if (
         availableMinutes <
@@ -176,7 +199,9 @@ function getDoctorProfileOrThrow(
     userId: string
 ): DoctorProfileDTO {
     const doctor =
-        findDoctorProfileByUserId(userId);
+        findDoctorProfileByUserId(
+            userId
+        );
 
     if (!doctor) {
         throw new DoctorDomainError(
@@ -202,16 +227,21 @@ function buildAgendaSummary(params: {
     let completed = 0;
     let cancelled = 0;
 
-    for (const appointment of params.appointments) {
+    for (
+        const appointment of
+        params.appointments
+    ) {
         if (
-            appointment.status === "COMPLETED"
+            appointment.status ===
+            "COMPLETED"
         ) {
             completed += 1;
             continue;
         }
 
         if (
-            appointment.status === "CANCELLED"
+            appointment.status ===
+            "CANCELLED"
         ) {
             cancelled += 1;
             continue;
@@ -237,6 +267,94 @@ function buildAgendaSummary(params: {
         upcomingScheduled,
         completed,
         cancelled,
+    };
+}
+
+export function getDoctorDashboard(
+    userId: string
+): DoctorDashboardDTO {
+    const doctor =
+        getDoctorProfileOrThrow(
+            userId
+        );
+
+    const appointments =
+        listAppointmentsForDoctor({
+            doctorId: doctor.id,
+        });
+
+    const schedules =
+        listDoctorSchedules(
+            doctor.id
+        );
+
+    const upcomingBlocks =
+        listFutureDoctorBlocks({
+            doctorId: doctor.id,
+            fromDateTime:
+                getLocalDateTime(),
+        });
+
+    const medicalRecords =
+        listMedicalRecordsForDoctor(
+            doctor.id
+        );
+
+    const today =
+        getLocalCalendarDate();
+
+    const todayAppointments =
+        appointments.filter(
+            (appointment) =>
+                appointment.status ===
+                "SCHEDULED" &&
+                appointment.scheduledDate ===
+                today
+        );
+
+    const upcomingAppointments =
+        appointments
+            .filter(
+                (appointment) =>
+                    appointment.status ===
+                    "SCHEDULED" &&
+                    appointment.scheduledDate >=
+                    today
+            )
+            .slice(0, 5);
+
+    const activeSchedules =
+        schedules.filter(
+            (schedule) =>
+                schedule.isActive
+        );
+
+    const summary =
+        buildAgendaSummary({
+            appointments,
+            today,
+        });
+
+    const relatedPatientsCount =
+        new Set(
+            medicalRecords.map(
+                (record) =>
+                    record.patientId
+            )
+        ).size;
+
+    return {
+        doctor,
+        summary,
+        todayAppointments,
+        upcomingAppointments,
+        activeSchedules,
+        upcomingBlocks:
+            upcomingBlocks.slice(
+                0,
+                3
+            ),
+        relatedPatientsCount,
     };
 }
 
@@ -285,10 +403,13 @@ export function getDoctorAgenda(params: {
             doctor.id
         );
 
-    const summary = buildAgendaSummary({
-        appointments: allAppointments,
-        today: getLocalCalendarDate(),
-    });
+    const summary =
+        buildAgendaSummary({
+            appointments:
+                allAppointments,
+            today:
+                getLocalCalendarDate(),
+        });
 
     return {
         doctor,
@@ -443,73 +564,78 @@ export function createBlockForDoctor(params: {
             endDateTime
         );
 
-    const database = getDb();
+    const database =
+        getDb();
 
     const transaction =
-        database.transaction(() => {
-            if (
-                hasDoctorBlockOverlap({
-                    doctorId:
-                        doctor.id,
-                    startDateTime:
-                        serializedStart,
-                    endDateTime:
-                        serializedEnd,
-                })
-            ) {
-                throw new DoctorDomainError(
-                    "El rango seleccionado se superpone con otro bloqueo."
-                );
-            }
+        database.transaction(
+            () => {
+                if (
+                    hasDoctorBlockOverlap(
+                        {
+                            doctorId:
+                                doctor.id,
+                            startDateTime:
+                                serializedStart,
+                            endDateTime:
+                                serializedEnd,
+                        }
+                    )
+                ) {
+                    throw new DoctorDomainError(
+                        "El rango seleccionado se superpone con otro bloqueo."
+                    );
+                }
 
-            const affectedAppointmentIds =
-                listScheduledAppointmentIdsAffectedByBlock(
-                    {
+                const affectedAppointmentIds =
+                    listScheduledAppointmentIdsAffectedByBlock(
+                        {
+                            doctorId:
+                                doctor.id,
+                            startDateTime:
+                                serializedStart,
+                            endDateTime:
+                                serializedEnd,
+                        }
+                    );
+
+                const normalizedReason =
+                    params.input.reason.trim();
+
+                const cancellationReason =
+                    normalizedReason
+                        ? `Horario bloqueado por el médico: ${normalizedReason}`
+                        : "Horario bloqueado por el médico.";
+
+                const block =
+                    createDoctorBlock({
                         doctorId:
                             doctor.id,
                         startDateTime:
                             serializedStart,
                         endDateTime:
                             serializedEnd,
-                    }
-                );
+                        reason:
+                            normalizedReason,
+                    });
 
-            const normalizedReason =
-                params.input.reason.trim();
+                const cancelledAppointments =
+                    cancelAppointmentsForDoctorBlock(
+                        {
+                            appointmentIds:
+                                affectedAppointmentIds,
+                            cancelledByUserId:
+                                params.userId,
+                            cancellationReason,
+                        }
+                    );
 
-            const cancellationReason =
-                normalizedReason
-                    ? `Horario bloqueado por el médico: ${normalizedReason}`
-                    : "Horario bloqueado por el médico.";
-
-            const block =
-                createDoctorBlock({
-                    doctorId:
-                        doctor.id,
-                    startDateTime:
-                        serializedStart,
-                    endDateTime:
-                        serializedEnd,
-                    reason:
-                        normalizedReason,
-                });
-
-            const cancelledAppointments =
-                cancelAppointmentsForDoctorBlock(
-                    {
-                        appointmentIds:
-                            affectedAppointmentIds,
-                        cancelledByUserId:
-                            params.userId,
-                        cancellationReason,
-                    }
-                );
-
-            return {
-                block,
-                cancelledAppointments,
-            };
-        });
+                return {
+                    block,
+                    cancelledAppointments,
+                };
+            }
+        );
 
     return transaction();
 }
@@ -586,41 +712,46 @@ export function saveMedicalRecordForDoctor(
         );
     }
 
-    const database = getDb();
+    const database =
+        getDb();
 
     const transaction =
-        database.transaction(() => {
-            upsertMedicalRecord({
-                patientId:
-                    params.input.patientId,
-                allergies:
-                    params.input.allergies.trim(),
-                chronicDiseases:
-                    params.input.chronicDiseases.trim(),
-                currentMedications:
-                    params.input.currentMedications.trim(),
-                emergencyContactName:
-                    params.input.emergencyContactName.trim(),
-                emergencyContactPhone:
-                    params.input.emergencyContactPhone.trim(),
-            });
-
-            const record =
-                findMedicalRecordForDoctor({
-                    doctorId:
-                        doctor.id,
+        database.transaction(
+            () => {
+                upsertMedicalRecord({
                     patientId:
                         params.input.patientId,
+                    allergies:
+                        params.input.allergies.trim(),
+                    chronicDiseases:
+                        params.input.chronicDiseases.trim(),
+                    currentMedications:
+                        params.input.currentMedications.trim(),
+                    emergencyContactName:
+                        params.input.emergencyContactName.trim(),
+                    emergencyContactPhone:
+                        params.input.emergencyContactPhone.trim(),
                 });
 
-            if (!record) {
-                throw new DoctorDomainError(
-                    "No se pudo consultar el expediente actualizado."
-                );
-            }
+                const record =
+                    findMedicalRecordForDoctor(
+                        {
+                            doctorId:
+                                doctor.id,
+                            patientId:
+                                params.input.patientId,
+                        }
+                    );
 
-            return record;
-        });
+                if (!record) {
+                    throw new DoctorDomainError(
+                        "No se pudo consultar el expediente actualizado."
+                    );
+                }
+
+                return record;
+            }
+        );
 
     return transaction();
 }
@@ -673,64 +804,73 @@ export function createMedicalNoteForDoctor(
         );
     }
 
-    const database = getDb();
+    const database =
+        getDb();
 
     const transaction =
-        database.transaction(() => {
-            const currentAppointment =
-                findAppointmentForDoctor({
-                    doctorId:
-                        doctor.id,
-                    appointmentId:
-                        appointment.id,
-                });
+        database.transaction(
+            () => {
+                const currentAppointment =
+                    findAppointmentForDoctor(
+                        {
+                            doctorId:
+                                doctor.id,
+                            appointmentId:
+                                appointment.id,
+                        }
+                    );
 
-            if (!currentAppointment) {
-                throw new DoctorDomainError(
-                    "La cita ya no está disponible."
-                );
-            }
+                if (
+                    !currentAppointment
+                ) {
+                    throw new DoctorDomainError(
+                        "La cita ya no está disponible."
+                    );
+                }
 
-            if (
-                currentAppointment.status ===
-                "CANCELLED"
-            ) {
-                throw new DoctorDomainError(
-                    "No se puede crear una nota para una cita cancelada."
-                );
-            }
+                if (
+                    currentAppointment.status ===
+                    "CANCELLED"
+                ) {
+                    throw new DoctorDomainError(
+                        "No se puede crear una nota para una cita cancelada."
+                    );
+                }
 
-            const currentNote =
-                findMedicalNoteByAppointment({
-                    doctorId:
-                        doctor.id,
+                const currentNote =
+                    findMedicalNoteByAppointment(
+                        {
+                            doctorId:
+                                doctor.id,
+                            appointmentId:
+                                currentAppointment.id,
+                        }
+                    );
+
+                if (currentNote) {
+                    throw new DoctorDomainError(
+                        "Esta cita ya tiene una nota médica registrada."
+                    );
+                }
+
+                return createMedicalNote({
                     appointmentId:
                         currentAppointment.id,
+                    doctorId:
+                        doctor.id,
+                    reason:
+                        params.input.reason.trim(),
+                    diagnosis:
+                        params.input.diagnosis.trim(),
+                    treatment:
+                        params.input.treatment.trim(),
+                    prescriptionText:
+                        params.input.prescriptionText.trim(),
+                    instructionsText:
+                        params.input.instructionsText.trim(),
                 });
-
-            if (currentNote) {
-                throw new DoctorDomainError(
-                    "Esta cita ya tiene una nota médica registrada."
-                );
             }
-
-            return createMedicalNote({
-                appointmentId:
-                    currentAppointment.id,
-                doctorId:
-                    doctor.id,
-                reason:
-                    params.input.reason.trim(),
-                diagnosis:
-                    params.input.diagnosis.trim(),
-                treatment:
-                    params.input.treatment.trim(),
-                prescriptionText:
-                    params.input.prescriptionText.trim(),
-                instructionsText:
-                    params.input.instructionsText.trim(),
-            });
-        });
+        );
 
     return transaction();
 }

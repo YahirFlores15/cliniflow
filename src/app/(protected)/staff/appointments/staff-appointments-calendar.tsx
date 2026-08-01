@@ -9,18 +9,16 @@ import {
     Stethoscope,
     UserRound,
 } from "lucide-react";
-import {
-    useState,
-} from "react";
+import { useMemo, useState } from "react";
 
+import { CancelAppointmentForm } from "@/app/(protected)/staff/appointments/cancel-appointment-form";
+import { RescheduleAppointmentForm } from "@/app/(protected)/staff/appointments/reschedule-appointment-form";
+import { AppointmentCalendar } from "@/components/calendar/appointment-calendar";
 import type {
     CalendarAppointment,
     CalendarDoctorOption,
 } from "@/components/calendar/calendar.types";
-import {
-    formatFullDate,
-} from "@/components/calendar/calendar.utils";
-import { AppointmentCalendar } from "@/components/calendar/appointment-calendar";
+import { formatFullDate } from "@/components/calendar/calendar.utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Drawer } from "@/components/ui/drawer";
@@ -29,6 +27,11 @@ type StaffAppointmentsCalendarProps = {
     appointments: CalendarAppointment[];
     doctors: CalendarDoctorOption[];
 };
+
+type DrawerMode =
+    | "DETAIL"
+    | "RESCHEDULE"
+    | "CANCEL";
 
 function getStatusLabel(
     status: CalendarAppointment["status"]
@@ -61,21 +64,81 @@ function getStatusVariant(
     return "primary";
 }
 
+function getDrawerTitle(
+    mode: DrawerMode
+): string {
+    if (mode === "RESCHEDULE") {
+        return "Reagendar cita";
+    }
+
+    if (mode === "CANCEL") {
+        return "Cancelar cita";
+    }
+
+    return "Detalle de la cita";
+}
+
+function getDrawerDescription(
+    mode: DrawerMode
+): string {
+    if (mode === "RESCHEDULE") {
+        return "Selecciona una nueva fecha y hora para la consulta.";
+    }
+
+    if (mode === "CANCEL") {
+        return "Confirma la cancelación de la cita seleccionada.";
+    }
+
+    return "Información administrativa de la consulta seleccionada.";
+}
+
 export function StaffAppointmentsCalendar({
     appointments,
     doctors,
 }: StaffAppointmentsCalendarProps) {
     const [
-        selectedAppointment,
-        setSelectedAppointment,
-    ] =
-        useState<CalendarAppointment | null>(
-            null
+        selectedAppointmentId,
+        setSelectedAppointmentId,
+    ] = useState<string | null>(null);
+
+    const [drawerMode, setDrawerMode] =
+        useState<DrawerMode>("DETAIL");
+
+    const selectedAppointment =
+        useMemo(
+            () =>
+                appointments.find(
+                    (appointment) =>
+                        appointment.id ===
+                        selectedAppointmentId
+                ) ?? null,
+            [
+                appointments,
+                selectedAppointmentId,
+            ]
         );
 
     const canModify =
         selectedAppointment?.status ===
         "SCHEDULED";
+
+    function selectAppointment(
+        appointment: CalendarAppointment
+    ): void {
+        setSelectedAppointmentId(
+            appointment.id
+        );
+        setDrawerMode("DETAIL");
+    }
+
+    function closeDrawer(): void {
+        setSelectedAppointmentId(null);
+        setDrawerMode("DETAIL");
+    }
+
+    function showDetails(): void {
+        setDrawerMode("DETAIL");
+    }
 
     return (
         <>
@@ -83,7 +146,7 @@ export function StaffAppointmentsCalendar({
                 appointments={appointments}
                 doctors={doctors}
                 onAppointmentSelect={
-                    setSelectedAppointment
+                    selectAppointment
                 }
             />
 
@@ -91,13 +154,16 @@ export function StaffAppointmentsCalendar({
                 open={Boolean(
                     selectedAppointment
                 )}
-                title="Detalle de la cita"
-                description="Información administrativa de la consulta seleccionada."
-                onClose={() =>
-                    setSelectedAppointment(null)
-                }
+                title={getDrawerTitle(
+                    drawerMode
+                )}
+                description={getDrawerDescription(
+                    drawerMode
+                )}
+                onClose={closeDrawer}
                 footer={
-                    selectedAppointment ? (
+                    selectedAppointment &&
+                        drawerMode === "DETAIL" ? (
                         <div className="grid gap-3 sm:grid-cols-2">
                             <Button
                                 type="button"
@@ -105,8 +171,13 @@ export function StaffAppointmentsCalendar({
                                 disabled={!canModify}
                                 title={
                                     canModify
-                                        ? "Disponible en el siguiente bloque"
+                                        ? "Reagendar cita"
                                         : "Solo las citas programadas pueden reagendarse"
+                                }
+                                onClick={() =>
+                                    setDrawerMode(
+                                        "RESCHEDULE"
+                                    )
                                 }
                             >
                                 <Pencil className="size-4" />
@@ -119,8 +190,13 @@ export function StaffAppointmentsCalendar({
                                 disabled={!canModify}
                                 title={
                                     canModify
-                                        ? "Disponible en el siguiente bloque"
+                                        ? "Cancelar cita"
                                         : "Solo las citas programadas pueden cancelarse"
+                                }
+                                onClick={() =>
+                                    setDrawerMode(
+                                        "CANCEL"
+                                    )
                                 }
                             >
                                 <CalendarX2 className="size-4" />
@@ -130,7 +206,31 @@ export function StaffAppointmentsCalendar({
                     ) : null
                 }
             >
-                {selectedAppointment ? (
+                {selectedAppointment &&
+                    drawerMode ===
+                    "RESCHEDULE" ? (
+                    <RescheduleAppointmentForm
+                        key={`reschedule-${selectedAppointment.id}`}
+                        appointment={
+                            selectedAppointment
+                        }
+                        onCancel={showDetails}
+                    />
+                ) : null}
+
+                {selectedAppointment &&
+                    drawerMode === "CANCEL" ? (
+                    <CancelAppointmentForm
+                        key={`cancel-${selectedAppointment.id}`}
+                        appointment={
+                            selectedAppointment
+                        }
+                        onCancel={showDetails}
+                    />
+                ) : null}
+
+                {selectedAppointment &&
+                    drawerMode === "DETAIL" ? (
                     <div className="space-y-6">
                         <section className="rounded-2xl border border-primary-border bg-primary-soft p-5">
                             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">

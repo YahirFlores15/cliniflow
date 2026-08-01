@@ -1,7 +1,11 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
+import {
+    revalidatePath,
+} from "next/cache";
+import {
+    redirect,
+} from "next/navigation";
 
 import { requireRole } from "@/server/auth/session";
 import {
@@ -29,7 +33,10 @@ export type StaffActionState = {
 function getActionErrorState(
     error: unknown
 ): StaffActionState {
-    if (error instanceof StaffDomainError) {
+    if (
+        error instanceof
+        StaffDomainError
+    ) {
         return {
             ok: false,
             message: error.message,
@@ -43,6 +50,17 @@ function getActionErrorState(
         message:
             "Ocurrió un error inesperado. Intenta nuevamente.",
     };
+}
+
+function isNextRedirectError(
+    error: unknown
+): boolean {
+    return (
+        error instanceof Error &&
+        error.message.includes(
+            "NEXT_REDIRECT"
+        )
+    );
 }
 
 export async function createPatientAction(
@@ -59,13 +77,15 @@ export async function createPatientAction(
             formData.get("email") ?? ""
         ),
         password: String(
-            formData.get("password") ?? ""
+            formData.get("password") ??
+            ""
         ),
         phone: String(
             formData.get("phone") ?? ""
         ),
         birthDate: String(
-            formData.get("birthDate") ?? ""
+            formData.get("birthDate") ??
+            ""
         ),
         sex: String(
             formData.get("sex") ?? ""
@@ -96,22 +116,23 @@ export async function createPatientAction(
         );
 
         revalidatePath("/staff");
-        revalidatePath("/staff/patients");
+        revalidatePath(
+            "/staff/patients"
+        );
 
         redirect(
             "/staff/patients?created=1"
         );
     } catch (error) {
         if (
-            error instanceof Error &&
-            error.message.includes(
-                "NEXT_REDIRECT"
-            )
+            isNextRedirectError(error)
         ) {
             throw error;
         }
 
-        return getActionErrorState(error);
+        return getActionErrorState(
+            error
+        );
     }
 }
 
@@ -123,7 +144,8 @@ export async function updatePatientAction(
 
     const rawData = {
         patientId: String(
-            formData.get("patientId") ?? ""
+            formData.get("patientId") ??
+            ""
         ),
         name: String(
             formData.get("name") ?? ""
@@ -135,7 +157,8 @@ export async function updatePatientAction(
             formData.get("phone") ?? ""
         ),
         birthDate: String(
-            formData.get("birthDate") ?? ""
+            formData.get("birthDate") ??
+            ""
         ),
         sex: String(
             formData.get("sex") ?? ""
@@ -166,11 +189,8 @@ export async function updatePatientAction(
         );
 
         revalidatePath("/staff");
-        revalidatePath("/staff/patients");
         revalidatePath(
-            `/staff/patients/edit?patientId=${encodeURIComponent(
-                parsed.data.patientId
-            )}`
+            "/staff/patients"
         );
 
         redirect(
@@ -178,15 +198,14 @@ export async function updatePatientAction(
         );
     } catch (error) {
         if (
-            error instanceof Error &&
-            error.message.includes(
-                "NEXT_REDIRECT"
-            )
+            isNextRedirectError(error)
         ) {
             throw error;
         }
 
-        return getActionErrorState(error);
+        return getActionErrorState(
+            error
+        );
     }
 }
 
@@ -194,23 +213,28 @@ export async function createAppointmentAction(
     _previousState: StaffActionState,
     formData: FormData
 ): Promise<StaffActionState> {
-    const session = await requireRole([
-        ROLES.STAFF,
-    ]);
+    const session =
+        await requireRole([
+            ROLES.STAFF,
+        ]);
 
     const rawData = {
         patientId: String(
-            formData.get("patientId") ?? ""
-        ),
-        doctorId: String(
-            formData.get("doctorId") ?? ""
-        ),
-        scheduledDate: String(
-            formData.get("scheduledDate") ??
+            formData.get("patientId") ??
             ""
         ),
+        doctorId: String(
+            formData.get("doctorId") ??
+            ""
+        ),
+        scheduledDate: String(
+            formData.get(
+                "scheduledDate"
+            ) ?? ""
+        ),
         startTime: String(
-            formData.get("startTime") ?? ""
+            formData.get("startTime") ??
+            ""
         ),
         durationMinutes: String(
             formData.get(
@@ -248,14 +272,22 @@ export async function createAppointmentAction(
         revalidatePath(
             "/staff/appointments"
         );
+        revalidatePath("/doctor");
+        revalidatePath("/patient");
 
-        return {
-            ok: true,
-            message:
-                "Cita agendada correctamente.",
-        };
+        redirect(
+            "/staff/appointments?created=1"
+        );
     } catch (error) {
-        return getActionErrorState(error);
+        if (
+            isNextRedirectError(error)
+        ) {
+            throw error;
+        }
+
+        return getActionErrorState(
+            error
+        );
     }
 }
 
@@ -277,7 +309,8 @@ export async function rescheduleAppointmentAction(
             ) ?? ""
         ),
         startTime: String(
-            formData.get("startTime") ?? ""
+            formData.get("startTime") ??
+            ""
         ),
     };
 
@@ -305,6 +338,8 @@ export async function rescheduleAppointmentAction(
         revalidatePath(
             "/staff/appointments"
         );
+        revalidatePath("/doctor");
+        revalidatePath("/patient");
 
         return {
             ok: true,
@@ -312,7 +347,9 @@ export async function rescheduleAppointmentAction(
                 "Cita reagendada correctamente.",
         };
     } catch (error) {
-        return getActionErrorState(error);
+        return getActionErrorState(
+            error
+        );
     }
 }
 
@@ -320,9 +357,10 @@ export async function cancelAppointmentAction(
     _previousState: StaffActionState,
     formData: FormData
 ): Promise<StaffActionState> {
-    const session = await requireRole([
-        ROLES.STAFF,
-    ]);
+    const session =
+        await requireRole([
+            ROLES.STAFF,
+        ]);
 
     const rawData = {
         appointmentId: String(
@@ -361,6 +399,8 @@ export async function cancelAppointmentAction(
         revalidatePath(
             "/staff/appointments"
         );
+        revalidatePath("/doctor");
+        revalidatePath("/patient");
 
         return {
             ok: true,
@@ -368,6 +408,8 @@ export async function cancelAppointmentAction(
                 "Cita cancelada correctamente.",
         };
     } catch (error) {
-        return getActionErrorState(error);
+        return getActionErrorState(
+            error
+        );
     }
 }

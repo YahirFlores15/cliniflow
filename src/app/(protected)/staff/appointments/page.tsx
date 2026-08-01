@@ -1,12 +1,22 @@
 import { StaffAppointmentsCalendar } from "@/app/(protected)/staff/appointments/staff-appointments-calendar";
 import { getStaffAppointments, getStaffDoctors, } from "@/server/modules/staff/staff.service";
+import { ActionMessage } from "@/components/feedback/action-message";
 import { CalendarPlus, CalendarRange, } from "lucide-react";
+import { buttonVariants } from "@/components/ui/button";
 import { requireRole } from "@/server/auth/session";
 import { ROLES } from "@/shared/constants/roles";
-import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 
-export default async function StaffAppointmentsPage() {
+type StaffAppointmentsPageProps = {
+    searchParams: Promise<{
+        created?: string;
+    }>;
+};
+
+export default async function StaffAppointmentsPage({
+    searchParams,
+}: StaffAppointmentsPageProps) {
     await requireRole([ROLES.STAFF]);
 
     const appointments =
@@ -14,6 +24,9 @@ export default async function StaffAppointmentsPage() {
 
     const doctors =
         getStaffDoctors();
+
+    const resolvedSearchParams =
+        await searchParams;
 
     const calendarAppointments =
         appointments.map(
@@ -84,20 +97,28 @@ export default async function StaffAppointmentsPage() {
                     </h2>
 
                     <p className="mt-2 max-w-2xl text-sm leading-6 text-foreground-muted">
-                        Consulta la agenda semanal o mensual, filtra por médico y selecciona una cita para revisar sus detalles.
+                        Consulta la agenda, administra citas existentes o registra una nueva consulta.
                     </p>
                 </div>
 
-                <Button
-                    type="button"
-                    size="lg"
-                    disabled
-                    title="Disponible en el siguiente bloque"
+                <Link
+                    href="/staff/appointments/new"
+                    className={buttonVariants({
+                        variant: "primary",
+                        size: "lg",
+                    })}
                 >
                     <CalendarPlus className="size-4.5" />
                     Nueva cita
-                </Button>
+                </Link>
             </section>
+
+            {resolvedSearchParams.created ===
+                "1" ? (
+                <ActionMessage variant="success">
+                    La cita fue agendada correctamente y ya aparece en el calendario.
+                </ActionMessage>
+            ) : null}
 
             <StaffAppointmentsCalendar
                 appointments={

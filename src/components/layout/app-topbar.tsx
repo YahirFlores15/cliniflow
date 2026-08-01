@@ -127,6 +127,19 @@ function getPageInformation(
 
     if (
         pathname.startsWith(
+            "/staff/appointments/new"
+        )
+    ) {
+        return {
+            eyebrow: "Recepción",
+            title: "Nueva cita",
+            description:
+                "Registro y validación de una consulta.",
+        };
+    }
+
+    if (
+        pathname.startsWith(
             "/staff/appointments"
         )
     ) {
@@ -147,7 +160,9 @@ function getPageInformation(
         };
     }
 
-    if (pathname.startsWith("/staff")) {
+    if (
+        pathname.startsWith("/staff")
+    ) {
         return {
             eyebrow: "Recepción",
             title: "Operación de la clínica",
@@ -156,7 +171,9 @@ function getPageInformation(
         };
     }
 
-    if (pathname.startsWith("/doctor")) {
+    if (
+        pathname.startsWith("/doctor")
+    ) {
         return {
             eyebrow: "Área médica",
             title: "Agenda médica",
@@ -165,7 +182,9 @@ function getPageInformation(
         };
     }
 
-    if (pathname.startsWith("/patient")) {
+    if (
+        pathname.startsWith("/patient")
+    ) {
         return {
             eyebrow: "Portal del paciente",
             title: "Mi información",
@@ -231,27 +250,39 @@ export function AppTopbar({
 
                 <div className="min-w-0 flex-1">
                     <p className="truncate text-xs font-bold uppercase tracking-[0.16em] text-primary">
-                        {pageInformation.eyebrow}
+                        {
+                            pageInformation.eyebrow
+                        }
                     </p>
 
                     <div className="mt-1 flex min-w-0 items-baseline gap-3">
                         <h1 className="truncate text-lg font-bold tracking-tight text-foreground sm:text-xl">
-                            {pageInformation.title}
+                            {
+                                pageInformation.title
+                            }
                         </h1>
 
                         <p className="hidden truncate text-sm text-foreground-muted xl:block">
-                            {pageInformation.description}
+                            {
+                                pageInformation.description
+                            }
                         </p>
                     </div>
                 </div>
 
                 <div className="hidden items-center gap-3 sm:flex">
                     <Badge variant="primary">
-                        {ROLE_LABELS[user.role]}
+                        {
+                            ROLE_LABELS[
+                            user.role
+                            ]
+                        }
                     </Badge>
 
                     <div className="flex size-10 items-center justify-center rounded-xl border border-primary-border bg-primary-soft text-sm font-bold text-primary">
-                        {getInitials(user.name)}
+                        {getInitials(
+                            user.name
+                        )}
                     </div>
 
                     <div className="hidden min-w-0 xl:block">

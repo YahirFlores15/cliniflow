@@ -1,13 +1,19 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
-
-import { requireRole } from "@/server/auth/session";
 import {
-    DoctorDomainError,
-    saveDoctorSchedule,
-} from "@/server/modules/doctor/doctor.service";
-import { ROLES } from "@/shared/constants/roles";
+    revalidatePath,
+} from "next/cache";
+
+import {
+    requireRole,
+} from "@/server/auth/session";
+import {
+    DoctorScheduleDomainError,
+    saveScheduleForDoctor,
+} from "@/server/modules/doctor/doctor-schedule.service";
+import {
+    ROLES,
+} from "@/shared/constants/roles";
 import {
     UpsertDoctorScheduleSchema,
 } from "@/shared/schemas/doctor.schemas";
@@ -22,15 +28,18 @@ function getScheduleActionErrorState(
 ): DoctorScheduleActionState {
     if (
         error instanceof
-        DoctorDomainError
+        DoctorScheduleDomainError
     ) {
         return {
             ok: false,
-            message: error.message,
+            message:
+                error.message,
         };
     }
 
-    console.error(error);
+    console.error(
+        error
+    );
 
     return {
         ok: false,
@@ -50,27 +59,34 @@ export async function saveDoctorScheduleAction(
         ]);
 
     const rawData = {
-        weekday: String(
-            formData.get(
-                "weekday"
-            ) ?? ""
-        ),
-        startTime: String(
-            formData.get(
-                "startTime"
-            ) ?? ""
-        ),
-        endTime: String(
-            formData.get(
-                "endTime"
-            ) ?? ""
-        ),
+        weekday:
+            String(
+                formData.get(
+                    "weekday"
+                ) ?? ""
+            ),
+
+        startTime:
+            String(
+                formData.get(
+                    "startTime"
+                ) ?? ""
+            ),
+
+        endTime:
+            String(
+                formData.get(
+                    "endTime"
+                ) ?? ""
+            ),
+
         appointmentDurationMinutes:
             String(
                 formData.get(
                     "appointmentDurationMinutes"
                 ) ?? ""
             ),
+
         isActive:
             formData.get(
                 "isActive"
@@ -82,18 +98,21 @@ export async function saveDoctorScheduleAction(
             rawData
         );
 
-    if (!parsed.success) {
+    if (
+        !parsed.success
+    ) {
         return {
             ok: false,
             message:
-                parsed.error.issues[0]
+                parsed.error
+                    .issues[0]
                     ?.message ??
                 "Los datos del horario no son válidos.",
         };
     }
 
     try {
-        saveDoctorSchedule({
+        saveScheduleForDoctor({
             userId:
                 session.user.id,
             input:
@@ -110,6 +129,10 @@ export async function saveDoctorScheduleAction(
 
         revalidatePath(
             "/doctor/schedule"
+        );
+
+        revalidatePath(
+            "/staff"
         );
 
         revalidatePath(

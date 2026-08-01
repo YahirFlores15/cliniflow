@@ -1,7 +1,43 @@
-import { cancelAppointmentsForDoctorBlock, createDoctorBlock, createMedicalNote, deleteDoctorBlock, findAppointmentForDoctor, findDoctorBlockById, findDoctorProfileByUserId, findMedicalNoteByAppointment, findMedicalRecordForDoctor, hasDoctorAccessToPatient, hasDoctorBlockOverlap, hasFutureAppointmentsOutsideSchedule, hasFutureScheduledAppointmentsForWeekday, listAppointmentsForDoctor, listDoctorSchedules, listFutureDoctorBlocks, listMedicalNotesForDoctor, listMedicalRecordsForDoctor, listScheduledAppointmentIdsAffectedByBlock, upsertDoctorSchedule, upsertMedicalRecord, } from "@/server/modules/doctor/doctor.repository";
-import type { DoctorAgendaDTO, DoctorAgendaSummaryDTO, DoctorAppointmentDTO, DoctorBlockDTO, DoctorDashboardDTO, DoctorProfileDTO, DoctorScheduleDTO, MedicalNoteDTO, MedicalRecordDTO, } from "@/shared/dtos/doctor.dtos";
-import type { CreateDoctorBlockInput, CreateMedicalNoteInput, DeleteDoctorBlockInput, DoctorAgendaFilterInput, UpdateMedicalRecordInput, UpsertDoctorScheduleInput, } from "@/shared/schemas/doctor.schemas";
+import {
+    cancelAppointmentsForDoctorBlock,
+    createDoctorBlock,
+    createMedicalNote,
+    deleteDoctorBlock,
+    findAppointmentForDoctor,
+    findDoctorBlockById,
+    findDoctorProfileByUserId,
+    findMedicalNoteByAppointment,
+    findMedicalRecordForDoctor,
+    hasDoctorAccessToPatient,
+    hasDoctorBlockOverlap,
+    listAppointmentsForDoctor,
+    listFutureDoctorBlocks,
+    listMedicalNotesForDoctor,
+    listMedicalRecordsForDoctor,
+    listScheduledAppointmentIdsAffectedByBlock,
+    upsertMedicalRecord,
+} from "@/server/modules/doctor/doctor.repository";
+import {
+    listSchedulesForDoctor,
+} from "@/server/modules/doctor/doctor-schedule.repository";
 import { getDb } from "@/server/db/connection";
+import type {
+    DoctorAgendaDTO,
+    DoctorAgendaSummaryDTO,
+    DoctorAppointmentDTO,
+    DoctorBlockDTO,
+    DoctorDashboardDTO,
+    DoctorProfileDTO,
+    MedicalNoteDTO,
+    MedicalRecordDTO,
+} from "@/shared/dtos/doctor.dtos";
+import type {
+    CreateDoctorBlockInput,
+    CreateMedicalNoteInput,
+    DeleteDoctorBlockInput,
+    DoctorAgendaFilterInput,
+    UpdateMedicalRecordInput,
+} from "@/shared/schemas/doctor.schemas";
 
 
 export class DoctorDomainError extends Error {
@@ -124,77 +160,6 @@ function serializeLocalDateTime(
     return getLocalDateTime(date);
 }
 
-function timeToMinutes(
-    time: string
-): number {
-    const match =
-        /^([01]\d|2[0-3]):([0-5]\d)$/.exec(
-            time
-        );
-
-    if (!match) {
-        throw new DoctorDomainError(
-            "La hora ingresada no es válida."
-        );
-    }
-
-    return (
-        Number(match[1]) *
-        60 +
-        Number(match[2])
-    );
-}
-
-function assertValidScheduleRange(params: {
-    startTime: string;
-    endTime: string;
-    appointmentDurationMinutes:
-    | 30
-    | 60;
-}): void {
-    const startMinutes =
-        timeToMinutes(
-            params.startTime
-        );
-
-    const endMinutes =
-        timeToMinutes(
-            params.endTime
-        );
-
-    if (
-        startMinutes >=
-        endMinutes
-    ) {
-        throw new DoctorDomainError(
-            "La hora de inicio debe ser anterior a la hora de finalización."
-        );
-    }
-
-    const availableMinutes =
-        endMinutes -
-        startMinutes;
-
-    if (
-        availableMinutes <
-        params.appointmentDurationMinutes
-    ) {
-        throw new DoctorDomainError(
-            "El horario debe permitir al menos una cita completa."
-        );
-    }
-
-    if (
-        availableMinutes %
-        params.appointmentDurationMinutes !==
-        0
-    ) {
-        throw new DoctorDomainError(
-            `El horario debe dividirse exactamente en bloques de ${params.appointmentDurationMinutes} minutos.`
-        );
-    }
-}
-
 function getDoctorProfileOrThrow(
     userId: string
 ): DoctorProfileDTO {
@@ -284,7 +249,7 @@ export function getDoctorDashboard(
         });
 
     const schedules =
-        listDoctorSchedules(
+        listSchedulesForDoctor(
             doctor.id
         );
 
@@ -382,7 +347,7 @@ export function getDoctorAgenda(params: {
         });
 
     const schedules =
-        listDoctorSchedules(
+        listSchedulesForDoctor(
             doctor.id
         );
 
@@ -420,83 +385,6 @@ export function getDoctorAgenda(params: {
         medicalNotes,
         summary,
     };
-}
-
-export function saveDoctorSchedule(params: {
-    userId: string;
-    input: UpsertDoctorScheduleInput;
-}): DoctorScheduleDTO {
-    const doctor =
-        getDoctorProfileOrThrow(
-            params.userId
-        );
-
-    assertValidScheduleRange({
-        startTime:
-            params.input.startTime,
-        endTime:
-            params.input.endTime,
-        appointmentDurationMinutes:
-            params.input
-                .appointmentDurationMinutes,
-    });
-
-    const today =
-        getLocalCalendarDate();
-
-    if (
-        !params.input.isActive &&
-        hasFutureScheduledAppointmentsForWeekday(
-            {
-                doctorId:
-                    doctor.id,
-                weekday:
-                    params.input.weekday,
-                today,
-            }
-        )
-    ) {
-        throw new DoctorDomainError(
-            "No puedes desactivar este día porque existen citas futuras programadas."
-        );
-    }
-
-    if (
-        params.input.isActive &&
-        hasFutureAppointmentsOutsideSchedule(
-            {
-                doctorId:
-                    doctor.id,
-                weekday:
-                    params.input.weekday,
-                today,
-                startTime:
-                    params.input.startTime,
-                endTime:
-                    params.input.endTime,
-            }
-        )
-    ) {
-        throw new DoctorDomainError(
-            "El nuevo horario dejaría fuera una o más citas futuras programadas."
-        );
-    }
-
-    return upsertDoctorSchedule({
-        doctorId:
-            doctor.id,
-        weekday:
-            params.input.weekday,
-        startTime:
-            params.input.startTime,
-        endTime:
-            params.input.endTime,
-        appointmentDurationMinutes:
-            params.input
-                .appointmentDurationMinutes,
-        isActive:
-            params.input.isActive,
-    });
 }
 
 export function createBlockForDoctor(params: {

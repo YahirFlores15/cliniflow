@@ -1,4 +1,14 @@
-import type { CancelAppointmentsForDoctorBlockRepositoryInput, CreateDoctorBlockRepositoryInput, CreateMedicalNoteRepositoryInput, DoctorAppointmentDTO, DoctorBlockDTO, DoctorProfileDTO, DoctorScheduleDTO, MedicalNoteDTO, MedicalRecordDTO, UpsertDoctorScheduleRepositoryInput, UpsertMedicalRecordRepositoryInput, } from "@/shared/dtos/doctor.dtos";
+import type {
+    CancelAppointmentsForDoctorBlockRepositoryInput,
+    CreateDoctorBlockRepositoryInput,
+    CreateMedicalNoteRepositoryInput,
+    DoctorAppointmentDTO,
+    DoctorBlockDTO,
+    DoctorProfileDTO,
+    MedicalNoteDTO,
+    MedicalRecordDTO,
+    UpsertMedicalRecordRepositoryInput,
+} from "@/shared/dtos/doctor.dtos";
 import type { DoctorAppointmentStatus, } from "@/shared/schemas/doctor.schemas";
 import { getDb } from "@/server/db/connection";
 import { nanoid } from "nanoid";
@@ -37,20 +47,6 @@ type DoctorAppointmentRow = {
     created_at: string;
     updated_at: string;
     has_medical_note: number;
-};
-
-type DoctorScheduleRow = {
-    id: string;
-    doctor_id: string;
-    weekday: number;
-    start_time: string;
-    end_time: string;
-    appointment_duration_minutes:
-    | 30
-    | 60;
-    is_active: number;
-    created_at: string;
-    updated_at: string;
 };
 
 type DoctorBlockRow = {
@@ -147,24 +143,6 @@ function mapDoctorAppointmentRow(
         updatedAt: row.updated_at,
         hasMedicalNote:
             row.has_medical_note === 1,
-    };
-}
-
-function mapDoctorScheduleRow(
-    row: DoctorScheduleRow
-): DoctorScheduleDTO {
-    return {
-        id: row.id,
-        doctorId: row.doctor_id,
-        weekday: row.weekday,
-        startTime: row.start_time,
-        endTime: row.end_time,
-        appointmentDurationMinutes:
-            row.appointment_duration_minutes,
-        isActive:
-            row.is_active === 1,
-        createdAt: row.created_at,
-        updatedAt: row.updated_at,
     };
 }
 
@@ -463,244 +441,6 @@ export function findAppointmentForDoctor(
     return row
         ? mapDoctorAppointmentRow(row)
         : null;
-}
-
-export function listDoctorSchedules(
-    doctorId: string
-): DoctorScheduleDTO[] {
-    const rows = db
-        .prepare(
-            `
-            SELECT
-                id,
-                doctor_id,
-                weekday,
-                start_time,
-                end_time,
-                appointment_duration_minutes,
-                is_active,
-                created_at,
-                updated_at
-            FROM doctor_schedules
-            WHERE doctor_id = ?
-            ORDER BY weekday ASC
-            `
-        )
-        .all(
-            doctorId
-        ) as DoctorScheduleRow[];
-
-    return rows.map(
-        mapDoctorScheduleRow
-    );
-}
-
-export function findDoctorSchedule(
-    params: {
-        doctorId: string;
-        weekday: number;
-    }
-): DoctorScheduleDTO | null {
-    const row = db
-        .prepare(
-            `
-            SELECT
-                id,
-                doctor_id,
-                weekday,
-                start_time,
-                end_time,
-                appointment_duration_minutes,
-                is_active,
-                created_at,
-                updated_at
-            FROM doctor_schedules
-            WHERE doctor_id = ?
-              AND weekday = ?
-            LIMIT 1
-            `
-        )
-        .get(
-            params.doctorId,
-            params.weekday
-        ) as
-        | DoctorScheduleRow
-        | undefined;
-
-    return row
-        ? mapDoctorScheduleRow(row)
-        : null;
-}
-
-export function hasFutureScheduledAppointmentsForWeekday(
-    params: {
-        doctorId: string;
-        weekday: number;
-        today: string;
-    }
-): boolean {
-    const row = db
-        .prepare(
-            `
-            SELECT
-                appointments.id
-            FROM appointments
-            WHERE appointments.doctor_id = ?
-              AND appointments.status =
-                    'SCHEDULED'
-              AND appointments.scheduled_date
-                    >= ?
-              AND (
-                  CASE
-                      WHEN CAST(
-                          strftime(
-                              '%w',
-                              appointments.scheduled_date
-                          )
-                          AS INTEGER
-                      ) = 0
-                          THEN 7
-                      ELSE CAST(
-                          strftime(
-                              '%w',
-                              appointments.scheduled_date
-                          )
-                          AS INTEGER
-                      )
-                  END
-              ) = ?
-            LIMIT 1
-            `
-        )
-        .get(
-            params.doctorId,
-            params.today,
-            params.weekday
-        ) as
-        | { id: string }
-        | undefined;
-
-    return Boolean(row);
-}
-
-export function hasFutureAppointmentsOutsideSchedule(
-    params: {
-        doctorId: string;
-        weekday: number;
-        today: string;
-        startTime: string;
-        endTime: string;
-    }
-): boolean {
-    const row = db
-        .prepare(
-            `
-            SELECT
-                appointments.id
-            FROM appointments
-            WHERE appointments.doctor_id = ?
-              AND appointments.status =
-                    'SCHEDULED'
-              AND appointments.scheduled_date
-                    >= ?
-              AND (
-                  CASE
-                      WHEN CAST(
-                          strftime(
-                              '%w',
-                              appointments.scheduled_date
-                          )
-                          AS INTEGER
-                      ) = 0
-                          THEN 7
-                      ELSE CAST(
-                          strftime(
-                              '%w',
-                              appointments.scheduled_date
-                          )
-                          AS INTEGER
-                      )
-                  END
-              ) = ?
-              AND (
-                  appointments.start_time
-                    < ?
-                  OR appointments.end_time
-                    > ?
-              )
-            LIMIT 1
-            `
-        )
-        .get(
-            params.doctorId,
-            params.today,
-            params.weekday,
-            params.startTime,
-            params.endTime
-        ) as
-        | { id: string }
-        | undefined;
-
-    return Boolean(row);
-}
-
-export function upsertDoctorSchedule(
-    params:
-        UpsertDoctorScheduleRepositoryInput
-): DoctorScheduleDTO {
-    const scheduleId = nanoid();
-
-    db.prepare(
-        `
-        INSERT INTO doctor_schedules (
-            id,
-            doctor_id,
-            weekday,
-            start_time,
-            end_time,
-            appointment_duration_minutes,
-            is_active
-        )
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-        ON CONFLICT (
-            doctor_id,
-            weekday
-        )
-        DO UPDATE SET
-            start_time =
-                excluded.start_time,
-            end_time =
-                excluded.end_time,
-            appointment_duration_minutes =
-                excluded.appointment_duration_minutes,
-            is_active =
-                excluded.is_active,
-            updated_at =
-                CURRENT_TIMESTAMP
-        `
-    ).run(
-        scheduleId,
-        params.doctorId,
-        params.weekday,
-        params.startTime,
-        params.endTime,
-        params.appointmentDurationMinutes,
-        params.isActive ? 1 : 0
-    );
-
-    const schedule =
-        findDoctorSchedule({
-            doctorId: params.doctorId,
-            weekday: params.weekday,
-        });
-
-    if (!schedule) {
-        throw new Error(
-            "No se pudo guardar el horario médico."
-        );
-    }
-
-    return schedule;
 }
 
 export function listFutureDoctorBlocks(

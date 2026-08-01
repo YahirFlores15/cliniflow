@@ -1,10 +1,10 @@
-import { DoctorScheduleForm } from "@/app/(protected)/doctor/schedule/doctor-schedule-form";
-import { getDoctorAgenda } from "@/server/modules/doctor/doctor.service";
+import { getDoctorScheduleWorkspace, } from "@/server/modules/doctor/doctor-schedule.service";
+import { DoctorScheduleForm, } from "@/app/(protected)/doctor/schedule/doctor-schedule-form";
 import { CalendarRange, Clock3, Info, } from "lucide-react";
 import { buttonVariants, } from "@/components/ui/button";
-import { requireRole } from "@/server/auth/session";
-import { ROLES } from "@/shared/constants/roles";
-import { cn } from "@/lib/utils";
+import { requireRole, } from "@/server/auth/session";
+import { ROLES, } from "@/shared/constants/roles";
+import { cn, } from "@/lib/utils";
 import Link from "next/link";
 
 
@@ -14,11 +14,10 @@ export default async function DoctorSchedulePage() {
             ROLES.DOCTOR,
         ]);
 
-    const agenda =
-        getDoctorAgenda({
-            userId:
-                session.user.id,
-        });
+    const workspace =
+        getDoctorScheduleWorkspace(
+            session.user.id
+        );
 
     return (
         <div className="flex flex-col gap-6">
@@ -52,7 +51,8 @@ export default async function DoctorSchedulePage() {
                         buttonVariants({
                             variant:
                                 "outline",
-                            size: "lg",
+                            size:
+                                "lg",
                         }),
                         "w-full sm:w-auto"
                     )}
@@ -80,7 +80,7 @@ export default async function DoctorSchedulePage() {
 
             <DoctorScheduleForm
                 schedules={
-                    agenda.schedules
+                    workspace.schedules
                 }
             />
         </div>

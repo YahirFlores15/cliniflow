@@ -7,13 +7,13 @@ import {
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { getInitials } from "@/lib/utils";
 import {
     ROLE_LABELS,
     type Role,
 } from "@/shared/constants/roles";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { getInitials } from "@/lib/utils";
 
 type TopbarUser = {
     name: string;
@@ -38,7 +38,37 @@ function getPageInformation(
     pathname: string,
     role: Role
 ): PageInformation {
-    if (pathname.startsWith("/superuser/users")) {
+    if (
+        pathname.startsWith(
+            "/superuser/users/new"
+        )
+    ) {
+        return {
+            eyebrow: "Administración",
+            title: "Crear usuario",
+            description:
+                "Registro de una nueva cuenta.",
+        };
+    }
+
+    if (
+        pathname.startsWith(
+            "/superuser/users/edit"
+        )
+    ) {
+        return {
+            eyebrow: "Administración",
+            title: "Editar usuario",
+            description:
+                "Actualización de datos administrativos.",
+        };
+    }
+
+    if (
+        pathname.startsWith(
+            "/superuser/users"
+        )
+    ) {
         return {
             eyebrow: "Administración",
             title: "Usuarios",
@@ -98,10 +128,12 @@ export function AppTopbar({
     onToggleCollapsed,
 }: AppTopbarProps) {
     const pathname = usePathname();
-    const pageInformation = getPageInformation(
-        pathname,
-        user.role
-    );
+
+    const pageInformation =
+        getPageInformation(
+            pathname,
+            user.role
+        );
 
     return (
         <header className="sticky top-0 z-20 border-b border-border bg-surface/95 backdrop-blur">

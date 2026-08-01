@@ -1,12 +1,8 @@
 "use server";
 
 import { hash } from "bcryptjs";
-import {
-    revalidatePath,
-} from "next/cache";
-import {
-    redirect,
-} from "next/navigation";
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
 import { requireRole } from "@/server/auth/session";
 import {
@@ -17,9 +13,7 @@ import {
     setUserActiveStatus,
     updateAdminUser,
 } from "@/server/modules/superuser/superuser.repository";
-import {
-    ROLES,
-} from "@/shared/constants/roles";
+import { ROLES } from "@/shared/constants/roles";
 import {
     CreateUserSchema,
     UpdateUserSchema,
@@ -38,18 +32,10 @@ export async function createUserAction(
     await requireRole([ROLES.SUPERUSER]);
 
     const rawData = {
-        name: String(
-            formData.get("name") ?? ""
-        ),
-        email: String(
-            formData.get("email") ?? ""
-        ),
-        password: String(
-            formData.get("password") ?? ""
-        ),
-        role: String(
-            formData.get("role") ?? ""
-        ),
+        name: String(formData.get("name") ?? ""),
+        email: String(formData.get("email") ?? ""),
+        password: String(formData.get("password") ?? ""),
+        role: String(formData.get("role") ?? ""),
     };
 
     const parsed =
@@ -159,12 +145,13 @@ export async function updateUserAction(
 
     revalidatePath("/superuser");
     revalidatePath("/superuser/users");
+    revalidatePath(
+        `/superuser/users/edit?userId=${encodeURIComponent(
+            parsed.data.userId
+        )}`
+    );
 
-    return {
-        ok: true,
-        message:
-            "Usuario actualizado correctamente.",
-    };
+    redirect("/superuser/users?updated=1");
 }
 
 export async function updateUserStatusAction(

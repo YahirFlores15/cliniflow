@@ -1,7 +1,7 @@
 import { listAdminUsers } from "@/server/modules/superuser/superuser.repository";
 import { UsersTable } from "@/app/(protected)/superuser/users/users-table";
 import { UserPlus, UsersRound, } from "lucide-react";
-import { buttonVariants, } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { requireRole } from "@/server/auth/session";
 import Link from "next/link";
 
@@ -9,6 +9,7 @@ import Link from "next/link";
 type SuperuserUsersPageProps = {
     searchParams: Promise<{
         created?: string;
+        updated?: string;
     }>;
 };
 
@@ -64,6 +65,10 @@ export default async function SuperuserUsersPage({
                 currentUserId={session.user.id}
                 createdSuccessfully={
                     resolvedSearchParams.created ===
+                    "1"
+                }
+                updatedSuccessfully={
+                    resolvedSearchParams.updated ===
                     "1"
                 }
             />

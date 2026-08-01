@@ -21,8 +21,8 @@ import {
 import { ActionMessage } from "@/components/feedback/action-message";
 import { Badge } from "@/components/ui/badge";
 import {
-    buttonVariants,
     Button,
+    buttonVariants,
 } from "@/components/ui/button";
 import {
     Card,
@@ -46,6 +46,7 @@ type UsersTableProps = {
     users: AdminUserDTO[];
     currentUserId: string;
     createdSuccessfully: boolean;
+    updatedSuccessfully: boolean;
 };
 
 type StatusFilter =
@@ -87,6 +88,7 @@ export function UsersTable({
     users,
     currentUserId,
     createdSuccessfully,
+    updatedSuccessfully,
 }: UsersTableProps) {
     const [search, setSearch] =
         useState("");
@@ -174,6 +176,12 @@ export function UsersTable({
             {createdSuccessfully ? (
                 <ActionMessage variant="success">
                     El usuario fue creado correctamente y ya aparece en el listado.
+                </ActionMessage>
+            ) : null}
+
+            {updatedSuccessfully ? (
+                <ActionMessage variant="success">
+                    Los datos del usuario fueron actualizados correctamente.
                 </ActionMessage>
             ) : null}
 

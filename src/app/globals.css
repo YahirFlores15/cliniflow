@@ -1,26 +1,202 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f9fafb;
+  --surface: #ffffff;
+  --surface-muted: #f3f4f6;
+  --foreground: #111827;
+  --foreground-muted: #6b7280;
+
+  --primary: #1a56db;
+  --primary-hover: #1649bb;
+  --primary-soft: #eef4ff;
+  --primary-border: #cddcff;
+
+  --secondary: #0e9f6e;
+  --secondary-hover: #0b815a;
+  --secondary-soft: #ecfdf5;
+  --secondary-border: #a7f3d0;
+
+  --warning: #f59e0b;
+  --warning-hover: #d97706;
+  --warning-soft: #fffbeb;
+  --warning-border: #fde68a;
+
+  --danger: #dc2626;
+  --danger-hover: #b91c1c;
+  --danger-soft: #fef2f2;
+  --danger-border: #fecaca;
+
+  --info: #2563eb;
+  --info-soft: #eff6ff;
+
+  --border: #e5e7eb;
+  --border-strong: #d1d5db;
+
+  --shadow-sm:
+    0 1px 2px 0 rgb(17 24 39 / 0.04),
+    0 1px 3px 0 rgb(17 24 39 / 0.06);
+
+  --shadow-md:
+    0 4px 6px -1px rgb(17 24 39 / 0.05),
+    0 2px 4px -2px rgb(17 24 39 / 0.05);
+
+  --shadow-lg:
+    0 12px 24px -8px rgb(17 24 39 / 0.10),
+    0 4px 8px -4px rgb(17 24 39 / 0.06);
+
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.25rem;
 }
 
 @theme inline {
   --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-foreground-muted: var(--foreground-muted);
+
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-soft: var(--primary-soft);
+  --color-primary-border: var(--primary-border);
+
+  --color-secondary: var(--secondary);
+  --color-secondary-hover: var(--secondary-hover);
+  --color-secondary-soft: var(--secondary-soft);
+  --color-secondary-border: var(--secondary-border);
+
+  --color-warning: var(--warning);
+  --color-warning-hover: var(--warning-hover);
+  --color-warning-soft: var(--warning-soft);
+  --color-warning-border: var(--warning-border);
+
+  --color-danger: var(--danger);
+  --color-danger-hover: var(--danger-hover);
+  --color-danger-soft: var(--danger-soft);
+  --color-danger-border: var(--danger-border);
+
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+
+  --font-sans: var(--font-inter);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  border-color: var(--border);
+}
+
+html {
+  min-width: 320px;
+  background: var(--background);
 }
 
 body {
+  margin: 0;
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-inter), Arial, Helvetica, sans-serif;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button:not(:disabled),
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+::selection {
+  background: var(--primary-border);
+  color: var(--foreground);
+}
+
+:focus-visible {
+  outline: 3px solid rgb(26 86 219 / 0.22);
+  outline-offset: 2px;
+}
+
+.cliniflow-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+
+.cliniflow-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.cliniflow-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.cliniflow-scrollbar::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: var(--border-strong);
+  background-clip: padding-box;
+}
+
+.cliniflow-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--foreground-muted);
+  background-clip: padding-box;
+}
+
+@keyframes clinicflow-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes clinicflow-pulse-line {
+  0% {
+    stroke-dashoffset: 160;
+    opacity: 0.45;
+  }
+
+  50% {
+    opacity: 1;
+  }
+
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0.45;
+  }
+}
+
+.animate-clinicflow-fade-in {
+  animation: clinicflow-fade-in 420ms ease-out both;
+}
+
+.animate-clinicflow-pulse-line {
+  stroke-dasharray: 160;
+  animation: clinicflow-pulse-line 2.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

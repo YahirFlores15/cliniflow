@@ -125,6 +125,19 @@ function getPageInformation(
         };
     }
 
+    if (
+        pathname.startsWith(
+            "/staff/appointments"
+        )
+    ) {
+        return {
+            eyebrow: "Recepción",
+            title: "Citas",
+            description:
+                "Calendario semanal y mensual.",
+        };
+    }
+
     if (pathname === "/staff") {
         return {
             eyebrow: "Recepción",

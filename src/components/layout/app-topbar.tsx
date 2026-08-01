@@ -188,7 +188,7 @@ function getPageInformation(
             eyebrow: "Área médica",
             title: "Nota médica",
             description:
-                "Registro clínico de una consulta.",
+                "Registro clínico de la consulta.",
         };
     }
 

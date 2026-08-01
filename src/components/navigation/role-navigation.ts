@@ -29,11 +29,17 @@ export const ROLE_NAVIGATION: Record<Role, NavigationItem[]> = {
 
     [ROLES.STAFF]: [
         {
-            label: "Recepción",
-            description: "Pacientes y gestión de citas",
+            label: "Dashboard",
+            description: "Resumen de recepción",
             href: "/staff",
-            icon: UsersRound,
+            icon: LayoutDashboard,
             exact: true,
+        },
+        {
+            label: "Pacientes",
+            description: "Registro y datos administrativos",
+            href: "/staff/patients",
+            icon: UsersRound,
         },
     ],
 

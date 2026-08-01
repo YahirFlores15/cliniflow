@@ -86,6 +86,54 @@ function getPageInformation(
         };
     }
 
+    if (
+        pathname.startsWith(
+            "/staff/patients/new"
+        )
+    ) {
+        return {
+            eyebrow: "Recepción",
+            title: "Registrar paciente",
+            description:
+                "Creación de cuenta y perfil administrativo.",
+        };
+    }
+
+    if (
+        pathname.startsWith(
+            "/staff/patients/edit"
+        )
+    ) {
+        return {
+            eyebrow: "Recepción",
+            title: "Editar paciente",
+            description:
+                "Actualización de datos administrativos.",
+        };
+    }
+
+    if (
+        pathname.startsWith(
+            "/staff/patients"
+        )
+    ) {
+        return {
+            eyebrow: "Recepción",
+            title: "Pacientes",
+            description:
+                "Registro y administración de pacientes.",
+        };
+    }
+
+    if (pathname === "/staff") {
+        return {
+            eyebrow: "Recepción",
+            title: "Dashboard",
+            description:
+                "Resumen operativo de la clínica.",
+        };
+    }
+
     if (pathname.startsWith("/staff")) {
         return {
             eyebrow: "Recepción",

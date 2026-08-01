@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
 import { requireRole } from "@/server/auth/session";
 import {
@@ -25,7 +26,9 @@ export type StaffActionState = {
     message: string;
 };
 
-function getActionErrorState(error: unknown): StaffActionState {
+function getActionErrorState(
+    error: unknown
+): StaffActionState {
     if (error instanceof StaffDomainError) {
         return {
             ok: false,
@@ -49,36 +52,65 @@ export async function createPatientAction(
     await requireRole([ROLES.STAFF]);
 
     const rawData = {
-        name: String(formData.get("name") ?? ""),
-        email: String(formData.get("email") ?? ""),
-        password: String(formData.get("password") ?? ""),
-        phone: String(formData.get("phone") ?? ""),
-        birthDate: String(formData.get("birthDate") ?? ""),
-        sex: String(formData.get("sex") ?? ""),
-        address: String(formData.get("address") ?? ""),
+        name: String(
+            formData.get("name") ?? ""
+        ),
+        email: String(
+            formData.get("email") ?? ""
+        ),
+        password: String(
+            formData.get("password") ?? ""
+        ),
+        phone: String(
+            formData.get("phone") ?? ""
+        ),
+        birthDate: String(
+            formData.get("birthDate") ?? ""
+        ),
+        sex: String(
+            formData.get("sex") ?? ""
+        ),
+        address: String(
+            formData.get("address") ?? ""
+        ),
     };
 
-    const parsed = CreatePatientSchema.safeParse(rawData);
+    const parsed =
+        CreatePatientSchema.safeParse(
+            rawData
+        );
 
     if (!parsed.success) {
         return {
             ok: false,
             message:
-                parsed.error.issues[0]?.message ??
+                parsed.error.issues[0]
+                    ?.message ??
                 "Los datos del paciente no son válidos.",
         };
     }
 
     try {
-        await createPatientForStaff(parsed.data);
+        await createPatientForStaff(
+            parsed.data
+        );
 
         revalidatePath("/staff");
+        revalidatePath("/staff/patients");
 
-        return {
-            ok: true,
-            message: "Paciente registrado correctamente.",
-        };
+        redirect(
+            "/staff/patients?created=1"
+        );
     } catch (error) {
+        if (
+            error instanceof Error &&
+            error.message.includes(
+                "NEXT_REDIRECT"
+            )
+        ) {
+            throw error;
+        }
+
         return getActionErrorState(error);
     }
 }
@@ -90,36 +122,70 @@ export async function updatePatientAction(
     await requireRole([ROLES.STAFF]);
 
     const rawData = {
-        patientId: String(formData.get("patientId") ?? ""),
-        name: String(formData.get("name") ?? ""),
-        email: String(formData.get("email") ?? ""),
-        phone: String(formData.get("phone") ?? ""),
-        birthDate: String(formData.get("birthDate") ?? ""),
-        sex: String(formData.get("sex") ?? ""),
-        address: String(formData.get("address") ?? ""),
+        patientId: String(
+            formData.get("patientId") ?? ""
+        ),
+        name: String(
+            formData.get("name") ?? ""
+        ),
+        email: String(
+            formData.get("email") ?? ""
+        ),
+        phone: String(
+            formData.get("phone") ?? ""
+        ),
+        birthDate: String(
+            formData.get("birthDate") ?? ""
+        ),
+        sex: String(
+            formData.get("sex") ?? ""
+        ),
+        address: String(
+            formData.get("address") ?? ""
+        ),
     };
 
-    const parsed = UpdatePatientSchema.safeParse(rawData);
+    const parsed =
+        UpdatePatientSchema.safeParse(
+            rawData
+        );
 
     if (!parsed.success) {
         return {
             ok: false,
             message:
-                parsed.error.issues[0]?.message ??
+                parsed.error.issues[0]
+                    ?.message ??
                 "Los datos del paciente no son válidos.",
         };
     }
 
     try {
-        updatePatientForStaff(parsed.data);
+        updatePatientForStaff(
+            parsed.data
+        );
 
         revalidatePath("/staff");
+        revalidatePath("/staff/patients");
+        revalidatePath(
+            `/staff/patients/edit?patientId=${encodeURIComponent(
+                parsed.data.patientId
+            )}`
+        );
 
-        return {
-            ok: true,
-            message: "Paciente actualizado correctamente.",
-        };
+        redirect(
+            "/staff/patients?updated=1"
+        );
     } catch (error) {
+        if (
+            error instanceof Error &&
+            error.message.includes(
+                "NEXT_REDIRECT"
+            )
+        ) {
+            throw error;
+        }
+
         return getActionErrorState(error);
     }
 }
@@ -128,28 +194,45 @@ export async function createAppointmentAction(
     _previousState: StaffActionState,
     formData: FormData
 ): Promise<StaffActionState> {
-    const session = await requireRole([ROLES.STAFF]);
+    const session = await requireRole([
+        ROLES.STAFF,
+    ]);
 
     const rawData = {
-        patientId: String(formData.get("patientId") ?? ""),
-        doctorId: String(formData.get("doctorId") ?? ""),
+        patientId: String(
+            formData.get("patientId") ?? ""
+        ),
+        doctorId: String(
+            formData.get("doctorId") ?? ""
+        ),
         scheduledDate: String(
-            formData.get("scheduledDate") ?? ""
+            formData.get("scheduledDate") ??
+            ""
         ),
-        startTime: String(formData.get("startTime") ?? ""),
+        startTime: String(
+            formData.get("startTime") ?? ""
+        ),
         durationMinutes: String(
-            formData.get("durationMinutes") ?? ""
+            formData.get(
+                "durationMinutes"
+            ) ?? ""
         ),
-        reason: String(formData.get("reason") ?? ""),
+        reason: String(
+            formData.get("reason") ?? ""
+        ),
     };
 
-    const parsed = CreateAppointmentSchema.safeParse(rawData);
+    const parsed =
+        CreateAppointmentSchema.safeParse(
+            rawData
+        );
 
     if (!parsed.success) {
         return {
             ok: false,
             message:
-                parsed.error.issues[0]?.message ??
+                parsed.error.issues[0]
+                    ?.message ??
                 "Los datos de la cita no son válidos.",
         };
     }
@@ -157,14 +240,19 @@ export async function createAppointmentAction(
     try {
         createAppointmentForStaff({
             input: parsed.data,
-            createdByUserId: session.user.id,
+            createdByUserId:
+                session.user.id,
         });
 
         revalidatePath("/staff");
+        revalidatePath(
+            "/staff/appointments"
+        );
 
         return {
             ok: true,
-            message: "Cita agendada correctamente.",
+            message:
+                "Cita agendada correctamente.",
         };
     } catch (error) {
         return getActionErrorState(error);
@@ -179,34 +267,49 @@ export async function rescheduleAppointmentAction(
 
     const rawData = {
         appointmentId: String(
-            formData.get("appointmentId") ?? ""
+            formData.get(
+                "appointmentId"
+            ) ?? ""
         ),
         scheduledDate: String(
-            formData.get("scheduledDate") ?? ""
+            formData.get(
+                "scheduledDate"
+            ) ?? ""
         ),
-        startTime: String(formData.get("startTime") ?? ""),
+        startTime: String(
+            formData.get("startTime") ?? ""
+        ),
     };
 
     const parsed =
-        RescheduleAppointmentSchema.safeParse(rawData);
+        RescheduleAppointmentSchema.safeParse(
+            rawData
+        );
 
     if (!parsed.success) {
         return {
             ok: false,
             message:
-                parsed.error.issues[0]?.message ??
+                parsed.error.issues[0]
+                    ?.message ??
                 "Los datos para reagendar no son válidos.",
         };
     }
 
     try {
-        rescheduleAppointmentForStaff(parsed.data);
+        rescheduleAppointmentForStaff(
+            parsed.data
+        );
 
         revalidatePath("/staff");
+        revalidatePath(
+            "/staff/appointments"
+        );
 
         return {
             ok: true,
-            message: "Cita reagendada correctamente.",
+            message:
+                "Cita reagendada correctamente.",
         };
     } catch (error) {
         return getActionErrorState(error);
@@ -217,22 +320,32 @@ export async function cancelAppointmentAction(
     _previousState: StaffActionState,
     formData: FormData
 ): Promise<StaffActionState> {
-    const session = await requireRole([ROLES.STAFF]);
+    const session = await requireRole([
+        ROLES.STAFF,
+    ]);
 
     const rawData = {
         appointmentId: String(
-            formData.get("appointmentId") ?? ""
+            formData.get(
+                "appointmentId"
+            ) ?? ""
         ),
-        reason: String(formData.get("reason") ?? ""),
+        reason: String(
+            formData.get("reason") ?? ""
+        ),
     };
 
-    const parsed = CancelAppointmentSchema.safeParse(rawData);
+    const parsed =
+        CancelAppointmentSchema.safeParse(
+            rawData
+        );
 
     if (!parsed.success) {
         return {
             ok: false,
             message:
-                parsed.error.issues[0]?.message ??
+                parsed.error.issues[0]
+                    ?.message ??
                 "Los datos para cancelar no son válidos.",
         };
     }
@@ -240,14 +353,19 @@ export async function cancelAppointmentAction(
     try {
         cancelAppointmentForStaff({
             input: parsed.data,
-            cancelledByUserId: session.user.id,
+            cancelledByUserId:
+                session.user.id,
         });
 
         revalidatePath("/staff");
+        revalidatePath(
+            "/staff/appointments"
+        );
 
         return {
             ok: true,
-            message: "Cita cancelada correctamente.",
+            message:
+                "Cita cancelada correctamente.",
         };
     } catch (error) {
         return getActionErrorState(error);

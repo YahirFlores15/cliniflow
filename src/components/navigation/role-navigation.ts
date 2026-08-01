@@ -7,15 +7,23 @@ export type NavigationItem = {
     description: string;
     href: string;
     icon: LucideIcon;
+    exact?: boolean;
 };
 
 export const ROLE_NAVIGATION: Record<Role, NavigationItem[]> = {
     [ROLES.SUPERUSER]: [
         {
-            label: "Administración",
-            description: "Gestión general de usuarios",
+            label: "Dashboard",
+            description: "Resumen administrativo",
             href: "/superuser",
-            icon: ShieldCheck,
+            icon: LayoutDashboard,
+            exact: true,
+        },
+        {
+            label: "Usuarios",
+            description: "Cuentas y accesos",
+            href: "/superuser/users",
+            icon: UsersRound,
         },
     ],
 
@@ -25,6 +33,7 @@ export const ROLE_NAVIGATION: Record<Role, NavigationItem[]> = {
             description: "Pacientes y gestión de citas",
             href: "/staff",
             icon: UsersRound,
+            exact: true,
         },
     ],
 
@@ -34,6 +43,7 @@ export const ROLE_NAVIGATION: Record<Role, NavigationItem[]> = {
             description: "Consultas y atención clínica",
             href: "/doctor",
             icon: Stethoscope,
+            exact: true,
         },
     ],
 
@@ -43,12 +53,13 @@ export const ROLE_NAVIGATION: Record<Role, NavigationItem[]> = {
             description: "Citas e información clínica",
             href: "/patient",
             icon: HeartPulse,
+            exact: true,
         },
     ],
 };
 
 export const ROLE_HOME_ICONS: Record<Role, LucideIcon> = {
-    [ROLES.SUPERUSER]: LayoutDashboard,
+    [ROLES.SUPERUSER]: ShieldCheck,
     [ROLES.STAFF]: CalendarDays,
     [ROLES.DOCTOR]: CalendarDays,
     [ROLES.PATIENT]: HeartPulse,

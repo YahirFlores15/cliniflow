@@ -43,11 +43,14 @@ function isNavigationItemActive(
     pathname: string,
     item: NavigationItem
 ): boolean {
-    if (pathname === item.href) {
-        return true;
+    if (item.exact) {
+        return pathname === item.href;
     }
 
-    return pathname.startsWith(`${item.href}/`);
+    return (
+        pathname === item.href ||
+        pathname.startsWith(`${item.href}/`)
+    );
 }
 
 export function AppSidebar({

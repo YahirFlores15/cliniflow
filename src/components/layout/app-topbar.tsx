@@ -38,12 +38,21 @@ function getPageInformation(
     pathname: string,
     role: Role
 ): PageInformation {
-    if (pathname.startsWith("/superuser")) {
+    if (pathname.startsWith("/superuser/users")) {
         return {
             eyebrow: "Administración",
-            title: "Panel de superusuario",
+            title: "Usuarios",
             description:
-                "Gestión administrativa y control de acceso.",
+                "Cuentas, roles y control de acceso.",
+        };
+    }
+
+    if (pathname === "/superuser") {
+        return {
+            eyebrow: "Administración",
+            title: "Dashboard",
+            description:
+                "Resumen general de usuarios y accesos.",
         };
     }
 

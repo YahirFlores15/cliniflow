@@ -1,7 +1,25 @@
 "use client";
 
-import { useActionState } from "react";
-import { loginAction, type LoginActionState } from "@/server/auth/auth.actions";
+import {
+    AlertCircle,
+    Eye,
+    EyeOff,
+    KeyRound,
+    LoaderCircle,
+    LogIn,
+    Mail,
+} from "lucide-react";
+import {
+    useActionState,
+    useState,
+} from "react";
+
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+    loginAction,
+    type LoginActionState,
+} from "@/server/auth/auth.actions";
 
 const initialState: LoginActionState = {
     ok: false,
@@ -9,64 +27,150 @@ const initialState: LoginActionState = {
 };
 
 export function LoginForm() {
-    const [state, formAction, isPending] = useActionState(
-        loginAction,
-        initialState
-    );
+    const [showPassword, setShowPassword] =
+        useState(false);
+
+    const [state, formAction, isPending] =
+        useActionState(
+            loginAction,
+            initialState
+        );
+
+    const hasError = Boolean(state.message);
 
     return (
-        <form action={formAction} className="space-y-5">
+        <form
+            action={formAction}
+            className="space-y-5"
+        >
             <div>
                 <label
                     htmlFor="email"
-                    className="mb-2 block text-sm font-medium text-slate-700"
+                    className="mb-2 block text-sm font-semibold text-foreground"
                 >
                     Correo electrónico
                 </label>
 
-                <input
+                <Input
                     id="email"
                     name="email"
                     type="email"
                     autoComplete="email"
+                    autoFocus
                     required
-                    className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-cyan-500 focus:ring-4 focus:ring-cyan-100"
-                    placeholder="admin@cliniflow.local"
+                    disabled={isPending}
+                    hasError={hasError}
+                    leadingIcon={
+                        <Mail
+                            className="size-4.5"
+                            strokeWidth={1.9}
+                        />
+                    }
+                    placeholder="usuario@cliniflow.local"
                 />
             </div>
 
             <div>
                 <label
                     htmlFor="password"
-                    className="mb-2 block text-sm font-medium text-slate-700"
+                    className="mb-2 block text-sm font-semibold text-foreground"
                 >
                     Contraseña
                 </label>
 
-                <input
+                <Input
                     id="password"
                     name="password"
-                    type="password"
+                    type={
+                        showPassword
+                            ? "text"
+                            : "password"
+                    }
                     autoComplete="current-password"
                     required
-                    className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-cyan-500 focus:ring-4 focus:ring-cyan-100"
-                    placeholder="••••••••"
+                    disabled={isPending}
+                    hasError={hasError}
+                    leadingIcon={
+                        <KeyRound
+                            className="size-4.5"
+                            strokeWidth={1.9}
+                        />
+                    }
+                    trailingElement={
+                        <button
+                            type="button"
+                            onClick={() =>
+                                setShowPassword(
+                                    (currentValue) =>
+                                        !currentValue
+                                )
+                            }
+                            disabled={isPending}
+                            className="flex size-9 items-center justify-center rounded-lg text-foreground-muted transition hover:bg-surface-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
+                            aria-label={
+                                showPassword
+                                    ? "Ocultar contraseña"
+                                    : "Mostrar contraseña"
+                            }
+                            aria-pressed={showPassword}
+                        >
+                            {showPassword ? (
+                                <EyeOff
+                                    className="size-4.5"
+                                    strokeWidth={1.9}
+                                />
+                            ) : (
+                                <Eye
+                                    className="size-4.5"
+                                    strokeWidth={1.9}
+                                />
+                            )}
+                        </button>
+                    }
+                    placeholder="Ingresa tu contraseña"
                 />
             </div>
 
             {state.message ? (
-                <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                    {state.message}
-                </p>
+                <div
+                    role="alert"
+                    aria-live="polite"
+                    className="flex items-start gap-3 rounded-xl border border-danger-border bg-danger-soft px-4 py-3 text-sm text-danger"
+                >
+                    <AlertCircle
+                        className="mt-0.5 size-4.5 shrink-0"
+                        strokeWidth={2}
+                    />
+
+                    <p className="leading-5">
+                        {state.message}
+                    </p>
+                </div>
             ) : null}
 
-            <button
+            <Button
                 type="submit"
+                size="lg"
+                fullWidth
                 disabled={isPending}
-                className="w-full rounded-xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-70"
+                className="mt-1"
             >
-                {isPending ? "Entrando..." : "Entrar"}
-            </button>
+                {isPending ? (
+                    <>
+                        <LoaderCircle className="size-4.5 animate-spin" />
+                        Iniciando sesión...
+                    </>
+                ) : (
+                    <>
+                        <LogIn className="size-4.5" />
+                        Iniciar sesión
+                    </>
+                )}
+            </Button>
+
+            <p className="text-center text-xs leading-5 text-foreground-muted">
+                El acceso está limitado a usuarios autorizados de ClinicFlow.
+            </p>
         </form>
     );
 }

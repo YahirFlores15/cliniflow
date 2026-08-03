@@ -1,36 +1,235 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ClinicFlow
 
-## Getting Started
+ClinicFlow es un sistema web para la administración de una clínica privada desarrollado con Next.js, TypeScript y SQLite.
 
-First, run the development server:
+El proyecto implementa cuatro roles independientes:
+
+- SUPERUSER
+- STAFF
+- DOCTOR
+- PATIENT
+
+Cada rol posee permisos y flujos completamente separados.
+
+---
+
+# Stack
+
+- Next.js 16
+- React 19
+- TypeScript
+- Tailwind CSS v4
+- SQLite
+- better-sqlite3
+- Zod
+- bcryptjs
+
+No utiliza ORM.
+
+---
+
+# Requisitos
+
+- Node.js 20+
+- pnpm
+- SQLite3
+
+---
+
+# Instalación
+
+Instalar dependencias:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+pnpm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Variables de entorno:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Crear `.env.local`
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```env
+DATABASE_PATH="./db/cliniflow.sqlite"
+APP_NAME="ClinicFlow"
+```
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
+# Base de datos
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Inicializar una base nueva:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+pnpm db:init
+```
 
-## Deploy on Vercel
+Aplicar migraciones:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+pnpm db:migrate
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Validar integridad:
+
+```bash
+pnpm db:integrity
+```
+
+---
+
+# Datos de prueba
+
+Crear SUPERUSER:
+
+```bash
+pnpm seed:superuser
+```
+
+Crear usuarios básicos:
+
+```bash
+pnpm seed:auth-users
+```
+
+Configurar horarios y datos de prueba para Staff:
+
+```bash
+pnpm seed:staff-test-data
+```
+
+---
+
+# Desarrollo
+
+Servidor:
+
+```bash
+pnpm dev
+```
+
+Lint:
+
+```bash
+pnpm lint
+```
+
+Build:
+
+```bash
+pnpm build
+```
+
+Producción:
+
+```bash
+pnpm start
+```
+
+---
+
+# Estructura principal
+
+```
+db/
+scripts/
+src/
+    app/
+    components/
+    server/
+    shared/
+```
+
+---
+
+# Arquitectura
+
+La aplicación está organizada en capas.
+
+```
+UI
+↓
+
+Server Actions
+↓
+
+Services
+
+↓
+
+Repositories
+
+↓
+
+SQLite
+```
+
+Las reglas de negocio viven únicamente en Services.
+
+Repositories únicamente realizan acceso a datos.
+
+Las páginas nunca consultan SQLite directamente.
+
+---
+
+# Roles
+
+## SUPERUSER
+
+- Administración de usuarios
+- Activar y desactivar cuentas
+
+## STAFF
+
+- Registro de pacientes
+- Agenda de citas
+- Reagendar
+- Cancelar citas
+
+No puede acceder a información clínica.
+
+## DOCTOR
+
+- Agenda médica
+- Horarios
+- Bloqueos
+- Expedientes
+- Notas médicas
+
+## PATIENT
+
+- Perfil
+- Próximas citas
+- Historial
+- Recetas
+- Expediente
+
+---
+
+# Seguridad
+
+Todas las rutas protegidas requieren sesión válida.
+
+Las Server Actions validan permisos mediante `requireRole()`.
+
+Staff y Superuser nunca pueden consultar:
+
+- diagnósticos
+- tratamientos
+- recetas
+- notas médicas
+
+---
+
+# Migraciones
+
+Las migraciones son inmutables.
+
+Una migración aplicada nunca debe modificarse.
+
+Los cambios posteriores deben implementarse mediante un nuevo archivo SQL.
+
+---
+
+# Licencia
+
+Proyecto académico.

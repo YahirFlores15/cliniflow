@@ -74,13 +74,6 @@ export type PatientPortalSummaryDTO = {
     medicalNotes: number;
 };
 
-export type PatientPortalDTO = {
-    profile: PatientProfileDTO;
-    appointments: PatientAppointmentDTO[];
-    medicalRecord: PatientMedicalRecordDTO;
-    medicalNotes: PatientMedicalNoteDTO[];
-    summary: PatientPortalSummaryDTO;
-};
 
 export type PatientAppointmentAvailabilityReason =
     | "AVAILABLE"

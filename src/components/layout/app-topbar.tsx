@@ -268,6 +268,52 @@ function getPageInformation(
                 "Resumen de la jornada médica.",
         };
     }
+    
+
+    if (
+        pathname.startsWith(
+            "/patient/medical-record"
+        )
+    ) {
+        return {
+            eyebrow:
+                "Portal del paciente",
+            title:
+                "Expediente clínico",
+            description:
+                "Antecedentes e información clínica permanente.",
+        };
+    }
+    
+    if (
+        pathname.startsWith(
+            "/patient/prescriptions"
+        )
+    ) {
+        return {
+            eyebrow:
+                "Portal del paciente",
+            title:
+                "Recetas e indicaciones",
+            description:
+                "Tratamientos y recomendaciones médicas.",
+        };
+    }
+
+    if (
+        pathname.startsWith(
+            "/patient/profile"
+        )
+    ) {
+        return {
+            eyebrow:
+                "Portal del paciente",
+            title:
+                "Mi perfil",
+            description:
+                "Datos personales y medios de contacto.",
+        };
+    }
 
     if (
         pathname.startsWith(

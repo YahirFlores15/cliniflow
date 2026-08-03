@@ -1,4 +1,4 @@
-import { Ban, CalendarDays, CalendarRange, Clock3, HeartPulse, LayoutDashboard, ShieldCheck, Stethoscope, UsersRound, type LucideIcon, } from "lucide-react";
+import { Ban, CalendarDays, CalendarRange, ClipboardList, Clock3, FileHeart, HeartPulse, Pill, LayoutDashboard, ShieldCheck, Stethoscope, UserRound, UsersRound, type LucideIcon, } from "lucide-react";
 import { ROLES, type Role, } from "@/shared/constants/roles";
 
 
@@ -16,101 +16,192 @@ export const ROLE_NAVIGATION: Record<
 > = {
     [ROLES.SUPERUSER]: [
         {
-            label: "Dashboard",
+            label:
+                "Dashboard",
             description:
                 "Resumen administrativo",
-            href: "/superuser",
-            icon: LayoutDashboard,
-            exact: true,
+            href:
+                "/superuser",
+            icon:
+                LayoutDashboard,
+            exact:
+                true,
         },
         {
-            label: "Usuarios",
+            label:
+                "Usuarios",
             description:
                 "Cuentas y accesos",
-            href: "/superuser/users",
-            icon: UsersRound,
+            href:
+                "/superuser/users",
+            icon:
+                UsersRound,
         },
     ],
 
     [ROLES.STAFF]: [
         {
-            label: "Dashboard",
+            label:
+                "Dashboard",
             description:
                 "Resumen de recepción",
-            href: "/staff",
-            icon: LayoutDashboard,
-            exact: true,
+            href:
+                "/staff",
+            icon:
+                LayoutDashboard,
+            exact:
+                true,
         },
         {
-            label: "Pacientes",
+            label:
+                "Pacientes",
             description:
                 "Registro y datos administrativos",
-            href: "/staff/patients",
-            icon: UsersRound,
+            href:
+                "/staff/patients",
+            icon:
+                UsersRound,
         },
         {
-            label: "Citas",
+            label:
+                "Citas",
             description:
                 "Calendario y agenda clínica",
-            href: "/staff/appointments",
-            icon: CalendarRange,
+            href:
+                "/staff/appointments",
+            icon:
+                CalendarRange,
         },
         {
-            label: "Disponibilidad",
+            label:
+                "Disponibilidad",
             description:
                 "Horarios y bloqueos médicos",
-            href: "/staff/availability",
-            icon: CalendarDays,
+            href:
+                "/staff/availability",
+            icon:
+                CalendarDays,
         },
     ],
 
     [ROLES.DOCTOR]: [
         {
-            label: "Dashboard",
+            label:
+                "Dashboard",
             description:
                 "Resumen de la jornada",
-            href: "/doctor",
-            icon: LayoutDashboard,
-            exact: true,
+            href:
+                "/doctor",
+            icon:
+                LayoutDashboard,
+            exact:
+                true,
         },
         {
-            label: "Agenda",
+            label:
+                "Agenda",
             description:
                 "Calendario de consultas",
-            href: "/doctor/agenda",
-            icon: CalendarRange,
+            href:
+                "/doctor/agenda",
+            icon:
+                CalendarRange,
         },
         {
-            label: "Horarios",
+            label:
+                "Horarios",
             description:
                 "Jornada semanal",
-            href: "/doctor/schedule",
-            icon: Clock3,
+            href:
+                "/doctor/schedule",
+            icon:
+                Clock3,
         },
         {
-            label: "Bloqueos",
+            label:
+                "Bloqueos",
             description:
                 "Ausencias y periodos no disponibles",
-            href: "/doctor/blocks",
-            icon: Ban,
+            href:
+                "/doctor/blocks",
+            icon:
+                Ban,
         },
         {
-            label: "Pacientes",
+            label:
+                "Pacientes",
             description:
                 "Expedientes relacionados",
-            href: "/doctor/patients",
-            icon: UsersRound,
+            href:
+                "/doctor/patients",
+            icon:
+                UsersRound,
         },
     ],
 
     [ROLES.PATIENT]: [
         {
-            label: "Mi portal",
+            label:
+                "Inicio",
             description:
-                "Citas e información clínica",
-            href: "/patient",
-            icon: HeartPulse,
-            exact: true,
+                "Resumen de tu portal",
+            href:
+                "/patient",
+            icon:
+                LayoutDashboard,
+            exact:
+                true,
+        },
+        {
+            label:
+                "Mis citas",
+            description:
+                "Calendario personal",
+            href:
+                "/patient/appointments",
+            icon:
+                CalendarRange,
+        },
+        {
+            label:
+                "Historial",
+            description:
+                "Consultas anteriores",
+            href:
+                "/patient/history",
+            icon:
+                ClipboardList,
+        },
+        {
+            label:
+                "Expediente",
+            description:
+                "Información clínica básica",
+            href:
+                "/patient/medical-record",
+            icon:
+                FileHeart,
+        },
+        {
+            label:
+                "Mi perfil",
+            description:
+                "Datos personales y contacto",
+            href:
+                "/patient/profile",
+            icon:
+                UserRound,
+        },
+        {
+
+            label:
+                "Recetas",
+            description:
+                "Tratamientos e indicaciones",
+            href:
+                "/patient/prescriptions",
+            icon:
+                Pill,
         },
     ],
 };
@@ -121,10 +212,13 @@ export const ROLE_HOME_ICONS: Record<
 > = {
     [ROLES.SUPERUSER]:
         ShieldCheck,
+
     [ROLES.STAFF]:
         CalendarDays,
+
     [ROLES.DOCTOR]:
         Stethoscope,
+
     [ROLES.PATIENT]:
         HeartPulse,
 };
